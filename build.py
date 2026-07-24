@@ -28,6 +28,7 @@ ROOT = Path(__file__).parent
 LIBRARY = ROOT / "library" / "library.json"
 IMAGES = ROOT / "library" / "images"
 TEMPLATE = ROOT / "preview" / "_library-template.html"
+FONTS = ROOT / "assets" / "fonts"
 OUTPUT = ROOT / "preview" / "inspiration-library.html"
 
 # Controlled vocabulary. Must stay in sync with TYPES / AXES in the template.
@@ -133,9 +134,25 @@ def main() -> int:
             sys.exit(f"Template is missing the {token} placeholder")
     html = html.replace("__LIBRARY_DATA__", payload).replace("__BUILD_ID__", build_id)
 
+    # Fonts are embedded rather than linked: the artifact host blocks font CDNs,
+    # and a silent fallback is what made earlier builds render badly.
+    font_bytes = 0
+    for token, filename in (
+        ("__FONT_LB_REGULAR__", "lb-regular.woff2"),
+        ("__FONT_WS_REGULAR__", "ws-regular.woff2"),
+        ("__FONT_WS_BOLD__", "ws-bold.woff2"),
+    ):
+        path = FONTS / filename
+        if not path.exists():
+            sys.exit(f"Missing font {path}")
+        raw = path.read_bytes()
+        font_bytes += len(raw)
+        html = html.replace(token, base64.b64encode(raw).decode("ascii"))
+
     OUTPUT.write_text(html)
     print(f"Built {OUTPUT.relative_to(ROOT)}")
     print(f"  {len(cards)} references, images at {width}px, {len(html)//1024}KB total")
+    print(f"  fonts embedded, {font_bytes//1024}KB")
     print(f"  build {build_id}")
     if total > BUDGET_BYTES:
         print("  WARNING: over the size budget even at the smallest width.")

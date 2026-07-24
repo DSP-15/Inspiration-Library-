@@ -76,10 +76,16 @@ replaces the cached copy. Export first if you have local additions worth keeping
 
 ## Fonts
 
-Titles are set in Palatino / Iowan Old Style with a Georgia fallback, and the interface
-in Optima / Gill Sans. These ship with macOS; elsewhere they fall back and the page will
-look plainer. Self-hosting the faces as `@font-face` data URIs would fix that and open up
-faces beyond what an OS ships.
+Titles are set in **Libre Baskerville**, the interface in **Work Sans**. Both are SIL
+Open Font License 1.1; the licences ship in `assets/fonts/`.
+
+They are **embedded in the page** as subset woff2 data URIs, not linked. The artifact host
+blocks font CDNs, and the previous build relied on Palatino and Optima being installed
+locally, so anywhere but macOS silently fell back and rendered badly. Embedding costs 40KB
+for all three faces and renders identically on every machine.
+
+Subsetting is to Latin plus the punctuation the interface uses. If you add copy needing
+other characters, regenerate with `fontTools.subset` and widen the character set.
 
 ## Copying from a card
 

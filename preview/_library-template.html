@@ -1,6 +1,26 @@
 <title>Inspiration Library</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
+  /* Libre Baskerville and Work Sans, both SIL Open Font License 1.1, subset to
+     the characters this interface uses and embedded so the page renders the same
+     everywhere. Licences are in assets/fonts/. */
+  @font-face {
+    font-family: "Library Serif";
+    src: url(data:font/woff2;base64,__FONT_LB_REGULAR__) format("woff2");
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: "Library Sans";
+    src: url(data:font/woff2;base64,__FONT_WS_REGULAR__) format("woff2");
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: "Library Sans";
+    src: url(data:font/woff2;base64,__FONT_WS_BOLD__) format("woff2");
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
+</style>
+<style>
   /* ============================================================
      INSPIRATION LIBRARY — "Rule"
      Museum-plaque structure: no card containers, images breathing
@@ -21,8 +41,8 @@
     --border-strong: #b4b4ad;
     --danger: #7d3030;
 
-    --font-title: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", "Hoefler Text", Georgia, serif;
-    --font-body: Optima, "Gill Sans", "Gill Sans MT", Avenir, "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --font-title: "Library Serif", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    --font-body: "Library Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
 
     --radius: 8px;
     --page-pad: clamp(20px, 4.5vw, 60px);
@@ -46,7 +66,7 @@
     gap: 20px; flex-wrap: wrap; padding: 46px var(--page-pad) 26px;
   }
   .brand-block { display: flex; align-items: baseline; gap: 14px; }
-  .brand { font-family: var(--font-title); font-size: 27px; margin: 0; font-weight: 400; }
+  .brand { font-family: var(--font-title); font-size: 24px; margin: 0; font-weight: 400; }
   .brand-count { font-size: 12.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
   .header-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
@@ -100,9 +120,9 @@
   }
   .chip:hover { border-color: var(--text); color: var(--text); }
   .chip .chip-count { font-size: 10.5px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
-  .chip.is-active { background: var(--accent); border-color: var(--accent); color: var(--accent-on); font-weight: 500; }
+  .chip.is-active { background: var(--accent); border-color: var(--accent); color: var(--accent-on); font-weight: 700; }
   .chip.is-active .chip-count { color: var(--accent-on); opacity: 0.72; }
-  .chip[data-facet="type"] { font-weight: 600; }
+  .chip[data-facet="type"] { font-weight: 700; }
   .chip.chip-more { border-style: dashed; color: var(--text-muted); }
   .filter-clear {
     background: none; border: none; color: var(--accent);
@@ -132,7 +152,7 @@
   .card-body { padding: 17px 0 0; display: flex; flex-direction: column; gap: 9px; }
   .card-index { font-size: 11px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-muted); font-variant-numeric: tabular-nums; }
   .card-title {
-    margin: 0; font-family: var(--font-title); font-size: 24px; line-height: 1.24;
+    margin: 0; font-family: var(--font-title); font-size: 21px; line-height: 1.3;
     font-weight: 400; text-wrap: balance; position: relative; display: inline-block;
   }
   .card-title::after {
@@ -141,13 +161,13 @@
     transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .card:hover .card-title::after, .card:focus-visible .card-title::after { transform: scaleX(1); }
-  .card-type { font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .card-type { font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
   .card-tags { display: flex; flex-wrap: wrap; gap: 5px 13px; margin-top: 3px; }
   .card-tags .tag { font-size: 12px; color: var(--text-muted); }
 
   /* ---------- empty ---------- */
   .empty-state { padding: 80px 20px 120px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; }
-  .empty-state h2 { font-family: var(--font-title); font-size: 24px; font-weight: 400; margin: 0; }
+  .empty-state h2 { font-family: var(--font-title); font-size: 22px; font-weight: 400; margin: 0; }
   .empty-state p { color: var(--text-muted); font-size: 13.5px; margin: 0; max-width: 46ch; line-height: 1.6; }
 
   /* ---------- footer ---------- */
@@ -185,8 +205,8 @@
   }
   .icon-btn:hover:not(:disabled) { color: var(--text); border-color: var(--text); }
   .detail-close { position: absolute; top: 20px; right: 20px; }
-  .detail-type { font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
-  .detail-title { margin: 0; font-family: var(--font-title); font-size: 33px; line-height: 1.16; font-weight: 400; }
+  .detail-type { font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+  .detail-title { margin: 0; font-family: var(--font-title); font-size: 29px; line-height: 1.16; font-weight: 400; }
   .detail-label { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); padding-bottom: 8px; }
   .detail-tags { display: flex; flex-wrap: wrap; gap: 7px; }
   .detail-tags .tag { font-size: 12px; color: var(--text-muted); border: 1px solid var(--border); border-radius: var(--radius); padding: 5px 11px; white-space: nowrap; }
@@ -205,7 +225,7 @@
   .form-modal { max-width: 620px; }
   .form-scroll { overflow-y: auto; padding: 32px 34px 0; display: flex; flex-direction: column; gap: 17px; }
   .form-foot { padding: 18px 34px 26px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; gap: 10px; align-items: center; }
-  .form-modal h2 { margin: 0; font-family: var(--font-title); font-size: 26px; font-weight: 400; }
+  .form-modal h2 { margin: 0; font-family: var(--font-title); font-size: 23px; font-weight: 400; }
   .field { display: flex; flex-direction: column; gap: 7px; }
   .field label, .field .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.13em; color: var(--text-muted); }
   .field-hint { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
