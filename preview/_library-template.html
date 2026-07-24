@@ -280,7 +280,7 @@
     <button class="btn ghost" id="export-btn">Export library</button>
     <button class="btn ghost" id="import-btn">Import library</button>
     <input type="file" id="import-file" accept="application/json" hidden />
-    <button class="btn ghost" id="reset-btn">Reset to seed</button>
+    <button class="btn ghost" id="reset-btn">Restore from repo</button>
   </div>
 </footer>
 
@@ -378,35 +378,8 @@
   var AXIS_BY_TERM = {};
   AXES.forEach(function (a) { a.terms.forEach(function (t) { AXIS_BY_TERM[t] = a.key; }); });
 
-  var SEED = [
-    {
-      id: "seed-1", added: 1,
-      title: "Crafting Culture, Detroit",
-      image: "data:image/jpeg;base64,__CRAFTING_CULTURE_B64__",
-      sourceUrl: "",
-      type: "Studio / Agency",
-      vocab: ["asymmetric grid", "full-bleed imagery", "oversized display", "grotesk display", "tight tracking", "monochrome", "high contrast", "editorial photography", "3D render"],
-      brief: "A studio portfolio built on scale and contrast. Massive grotesk display type stacked two lines on a white ground, set tight, with no colour at all. Below it an asymmetric grid of high-contrast editorial photography and 3D render work runs full bleed to the frame edge, so the imagery carries every bit of the colour."
-    },
-    {
-      id: "seed-2", added: 2,
-      title: "Outfit",
-      image: "data:image/jpeg;base64,__OUTFIT_B64__",
-      sourceUrl: "",
-      type: "E-commerce",
-      vocab: ["centred composition", "product grid", "oversized display", "grotesk display", "single saturated accent", "high contrast", "product photography"],
-      brief: "A storefront that commits entirely to one colour. Saturated red floods the page while the wordmark sits enormous inside a centred light panel, grotesk and knocked out at display scale. A four-up product grid shot in black and white sits beneath, holding its own against the red field."
-    },
-    {
-      id: "seed-3", added: 3,
-      title: "Our Projects, Kim Kneipp",
-      image: "data:image/jpeg;base64,__OUR_PROJECTS_B64__",
-      sourceUrl: "",
-      type: "Portfolio",
-      vocab: ["dense index", "editorial columns", "oversized display", "serif display", "warm neutral ground", "muted palette", "editorial photography", "archival grain"],
-      brief: "A quiet interiors portfolio on a warm putty ground, with an oversized elegant serif headline in soft grey-green. A hairline motif leads the eye down into a dense index of work, where muted archival-toned photography sits in editorial columns under small captions."
-    }
-  ];
+  var SEED = __LIBRARY_DATA__;
+  var BUILD_ID = "__BUILD_ID__";
 
   var STORAGE_KEY = "inspiration-library-rule-v1";
   var state = {
@@ -415,15 +388,22 @@
   };
 
   /* ---------- persistence ---------- */
+  // The repository is the source of truth. A build carries its own id, so when
+  // a newer one is published it replaces whatever this browser had cached
+  // rather than leaving the viewer on a stale copy.
+  var freshBuild = false;
   function loadState() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         var p = JSON.parse(raw);
         if (p && Array.isArray(p.cards) && p.cards.length) {
-          state.cards = p.cards;
-          state.sort = p.sort || "added";
-          return;
+          if (p.buildId === BUILD_ID) {
+            state.cards = p.cards;
+            state.sort = p.sort || "added";
+            return;
+          }
+          freshBuild = true;
         }
       }
     } catch (e) {}
@@ -431,7 +411,7 @@
   }
   function saveState() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards: state.cards, sort: state.sort }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards: state.cards, sort: state.sort, buildId: BUILD_ID }));
     } catch (e) {
       showToast("Could not save. The library may be too large for this browser's storage.");
     }
@@ -940,11 +920,11 @@
   document.getElementById("sort").addEventListener("change", function (e) { state.sort = e.target.value; render(); });
 
   document.getElementById("reset-btn").addEventListener("click", function () {
-    if (!window.confirm("Replace the current library with the three seed references?")) return;
+    if (!window.confirm("Replace the current library with the " + SEED.length + " references from the repository?")) return;
     state.cards = SEED.map(function (c) { return JSON.parse(JSON.stringify(c)); });
     state.activeFilters = []; state.query = ""; state.showAllTags = false;
     document.getElementById("search").value = "";
-    render(); showToast("Reset to seed");
+    render(); showToast("Restored the library from the repository");
   });
 
   document.getElementById("export-btn").addEventListener("click", function () {
@@ -1057,5 +1037,6 @@
   document.getElementById("sort").value = state.sort;
   buildPickers();
   render();
+  if (freshBuild) showToast("Updated to the latest library from the repository");
 })();
 </script>

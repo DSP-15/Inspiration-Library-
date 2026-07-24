@@ -1,0 +1,59 @@
+{
+  "$comment": "Canonical library data. Edit this file (or ask Claude to), then run: python3 build.py. Each entry's `image` is a filename in library/images/. Vocabulary terms must come from the controlled lists in build.py, which validates them.",
+  "entries": [
+    {
+      "id": "crafting-culture",
+      "title": "Crafting Culture, Detroit",
+      "image": "crafting-culture.jpg",
+      "sourceUrl": "",
+      "type": "Studio / Agency",
+      "vocab": [
+        "asymmetric grid",
+        "full-bleed imagery",
+        "oversized display",
+        "grotesk display",
+        "tight tracking",
+        "monochrome",
+        "high contrast",
+        "editorial photography",
+        "3D render"
+      ],
+      "brief": "A studio portfolio built on scale and contrast. Massive grotesk display type stacked two lines on a white ground, set tight, with no colour at all in the interface. Below it an asymmetric grid of high-contrast editorial photography and 3D render work runs full bleed to the frame edge, so the imagery carries every bit of the colour."
+    },
+    {
+      "id": "outfit",
+      "title": "Outfit",
+      "image": "outfit.jpg",
+      "sourceUrl": "",
+      "type": "E-commerce",
+      "vocab": [
+        "centred composition",
+        "product grid",
+        "oversized display",
+        "grotesk display",
+        "single saturated accent",
+        "high contrast",
+        "product photography"
+      ],
+      "brief": "A storefront that commits entirely to one colour. Saturated red floods the page while the wordmark sits enormous inside a centred light panel, grotesk and knocked out at display scale. A four-up product grid shot in black and white sits beneath, holding its own against the red field."
+    },
+    {
+      "id": "our-projects",
+      "title": "Our Projects, Kim Kneipp",
+      "image": "our-projects.jpg",
+      "sourceUrl": "",
+      "type": "Portfolio",
+      "vocab": [
+        "dense index",
+        "editorial columns",
+        "oversized display",
+        "serif display",
+        "warm neutral ground",
+        "muted palette",
+        "editorial photography",
+        "archival grain"
+      ],
+      "brief": "A quiet interiors portfolio on a warm putty ground, with an oversized elegant serif headline in soft grey-green. A hairline motif leads the eye down into a dense index of work, where muted archival-toned photography sits in editorial columns under small captions."
+    }
+  ]
+}
