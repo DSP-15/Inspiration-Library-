@@ -52,3 +52,27 @@ pathlib.Path("index.html").write_text(html)
 
 Upload them to this repo through the GitHub web UI. That path is confirmed working and is
 how the three current seeds arrived.
+
+---
+
+# Gallery Plaque — Three Iterations
+
+`gallery-iterations.html` narrows the five styles down to the chosen Gallery Plaque
+direction and offers three refinements of it. Source template: `_gallery-template.html`.
+
+| Iteration | Display face | Palette | Structure |
+|---|---|---|---|
+| **A · Wall Label** | Didot / Bodoni class, high contrast | Cool gallery putty, olive accent | Three-up, light sepia, letterspaced Gill Sans captions |
+| **B · Archive Press** | Palatino / Iowan Old Style, humanist | Warm manila, ink-blue accent | Two-up so plates run large, monospace captions |
+| **C · Modern Plaque** | Optima / Gill Sans, humanist sans | Cool stone, clay accent | Three-up tighter, near-neutral imagery in a hairline frame |
+
+## Font caveat
+
+The Artifact content policy blocks external font CDNs, and this build environment has no
+network access to download and embed font files. All three iterations therefore use system
+font stacks. Didot, Palatino, Optima, and Gill Sans all ship with macOS and will render as
+intended there; on Windows or Linux each stack falls back to its next entry, so the
+iterations will look closer to one another than they do on a Mac.
+
+Once a direction is chosen, the intended faces can be self-hosted as `@font-face` data URIs
+so they render identically everywhere.

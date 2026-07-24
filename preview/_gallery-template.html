@@ -1,0 +1,651 @@
+<title>Gallery Plaque — Three Iterations</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  /* ============ RESET / BASE ============ */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  img { max-width: 100%; display: block; }
+  button { font: inherit; cursor: pointer; }
+  a { color: inherit; }
+
+  /* ============ PREVIEW BAR (tooling chrome, not part of any iteration) ============ */
+  #preview-bar {
+    position: sticky; top: 0; z-index: 999;
+    display: flex; align-items: stretch;
+    background: #17161a; color: #cfcfcf;
+    border-bottom: 1px solid #2c2b30;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px; overflow-x: auto;
+  }
+  #preview-bar .pb-label {
+    padding: 0 16px; white-space: nowrap; color: #79767f;
+    letter-spacing: 0.09em; text-transform: uppercase; font-size: 10px;
+    border-right: 1px solid #2c2b30; display: flex; align-items: center;
+  }
+  #preview-bar .pb-style {
+    padding: 11px 18px; white-space: nowrap; text-align: left;
+    background: transparent; border: none; color: #9c9aa3;
+    border-right: 1px solid #232228;
+    transition: background 0.15s ease, color 0.15s ease;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  #preview-bar .pb-style em { font-style: normal; font-weight: 600; font-size: 12px; }
+  #preview-bar .pb-style span { font-size: 9.5px; color: #6f6d77; letter-spacing: 0.04em; }
+  #preview-bar .pb-style:hover { background: #201f25; color: #eaeaea; }
+  #preview-bar .pb-style.is-active { background: #ece9e2; color: #17161a; }
+  #preview-bar .pb-style.is-active span { color: #57545c; }
+  #preview-bar .pb-spacer { flex: 1; }
+  #preview-bar .pb-reset {
+    padding: 11px 16px; background: transparent; border: none;
+    border-left: 1px solid #2c2b30; color: #79767f; white-space: nowrap;
+  }
+  #preview-bar .pb-reset:hover { color: #e08a6a; }
+
+  /* ============ SHARED SHELL ============ */
+  body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; font-family: var(--font-body); }
+  #app { min-height: 100dvh; background: var(--bg); color: var(--text); }
+
+  .site-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 24px; padding: var(--head-pad, 40px) var(--page-pad) 26px;
+  }
+  .brand { font-family: var(--font-display); font-size: var(--brand-size, 22px); letter-spacing: var(--brand-track, 0); margin: 0; font-weight: var(--brand-weight, 400); }
+  .add-btn {
+    border: 1px solid var(--text); background: transparent; color: var(--text);
+    padding: 8px 18px; border-radius: 0; font-size: 10.5px;
+    font-family: var(--font-meta); text-transform: uppercase; letter-spacing: 0.12em;
+    transition: background 0.18s ease, color 0.18s ease; white-space: nowrap;
+  }
+  .add-btn:hover { background: var(--text); color: var(--bg); }
+
+  .filter-bar {
+    display: flex; flex-wrap: wrap; gap: var(--chip-gap, 8px) var(--chip-gap-x, 10px);
+    padding: 0 var(--page-pad) var(--filter-pad-b, 26px);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: var(--filter-mb, 40px);
+    align-items: baseline;
+  }
+  .chip {
+    border: none; background: transparent; padding: 3px 0;
+    font-family: var(--font-meta); font-size: var(--chip-size, 11px);
+    letter-spacing: var(--chip-track, 0.08em); text-transform: var(--chip-case, uppercase);
+    color: var(--text-muted); border-bottom: 1px solid transparent;
+    transition: color 0.15s ease, border-color 0.15s ease; white-space: nowrap;
+  }
+  .chip:hover { color: var(--text); }
+  .chip.is-active { color: var(--accent); border-bottom-color: var(--accent); }
+  .chip .chip-count { font-size: 0.82em; opacity: 0.55; margin-left: 3px; font-variant-numeric: tabular-nums; }
+  .chip[data-facet="type"] { color: var(--text); font-weight: var(--chip-type-weight, 600); }
+  .chip[data-facet="type"].is-active { color: var(--accent); }
+
+  .grid {
+    display: grid; gap: var(--row-gap) var(--col-gap);
+    grid-template-columns: repeat(var(--grid-cols), 1fr);
+    padding: 0 var(--page-pad) 100px;
+  }
+  @media (max-width: 1000px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 660px) { .grid { grid-template-columns: 1fr; } }
+
+  .card { background: transparent; border: none; padding: 0; text-align: left; display: block; width: 100%; }
+  .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; }
+  .card-media {
+    width: 100%; aspect-ratio: var(--card-aspect); overflow: hidden;
+    background: var(--bg-elevated); border: var(--media-border, none);
+    filter: var(--media-filter, none);
+    transition: filter 0.4s ease;
+  }
+  .card-media img { width: 100%; height: 100%; object-fit: cover; }
+  .card:hover .card-media { filter: var(--media-filter-hover, var(--media-filter, none)); }
+  .card-body { padding: var(--body-pad, 16px 0 0); display: flex; flex-direction: column; gap: var(--body-gap, 8px); }
+  .card-index {
+    font-family: var(--font-meta); font-size: var(--plate-size, 10px);
+    letter-spacing: 0.14em; color: var(--text-muted); text-transform: uppercase;
+  }
+  .card-title {
+    margin: 0; font-family: var(--font-display);
+    font-size: var(--title-size, 22px); line-height: var(--title-lh, 1.2);
+    font-weight: var(--title-weight, 400); letter-spacing: var(--title-track, 0);
+    text-wrap: balance;
+  }
+  .card-type {
+    font-family: var(--font-meta); font-size: var(--type-size, 10px);
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
+  }
+  .card-tags {
+    display: flex; flex-wrap: wrap; gap: 4px 14px;
+    border-top: 1px solid var(--border); padding-top: 10px; margin-top: 2px;
+  }
+  .card-tags .tag {
+    font-family: var(--font-meta); font-size: var(--tag-size, 10.5px);
+    letter-spacing: var(--tag-track, 0.05em); color: var(--text-muted);
+    text-transform: var(--tag-case, none);
+  }
+
+  .empty-state { padding: 90px 20px; text-align: center; color: var(--text-muted); font-family: var(--font-meta); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+  /* ============ MODALS ============ */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 1000;
+    background: color-mix(in srgb, var(--text) 62%, transparent);
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .modal-backdrop[hidden] { display: none; }
+  .modal {
+    background: var(--bg-elevated); color: var(--text);
+    border: 1px solid var(--border); border-radius: 0;
+    max-width: 980px; width: 100%; max-height: 90vh; overflow-y: auto;
+  }
+  .detail-modal { display: grid; grid-template-columns: 1.15fr 1fr; }
+  @media (max-width: 800px) { .detail-modal { grid-template-columns: 1fr; } }
+  .detail-media {
+    background: var(--bg); display: flex; align-items: center; justify-content: center;
+    padding: 22px; border-right: 1px solid var(--border);
+  }
+  .detail-media img { width: 100%; height: auto; max-height: 74vh; object-fit: contain; filter: var(--media-filter, none); }
+  .detail-body { padding: 34px 34px 30px; display: flex; flex-direction: column; gap: 15px; }
+  .detail-close {
+    position: absolute; top: 26px; right: 26px;
+    background: transparent; border: 1px solid var(--border); border-radius: 50%;
+    width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+    font-size: 15px; color: var(--text-muted); line-height: 1;
+  }
+  .detail-close:hover { color: var(--text); border-color: var(--text); }
+  .detail-modal { position: relative; }
+  .detail-type { font-family: var(--font-meta); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); }
+  .detail-title { margin: 0; font-family: var(--font-display); font-size: var(--detail-title-size, 32px); line-height: 1.15; font-weight: var(--title-weight, 400); letter-spacing: var(--title-track, 0); }
+  .detail-label { font-family: var(--font-meta); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); padding-bottom: 7px; }
+  .detail-tags { display: flex; flex-wrap: wrap; gap: 6px 8px; }
+  .detail-tags .tag {
+    font-family: var(--font-meta); font-size: 10.5px; letter-spacing: 0.05em;
+    color: var(--text-muted); border: 1px solid var(--border); padding: 4px 9px; white-space: nowrap;
+  }
+  .detail-link { font-family: var(--font-meta); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
+  .detail-nolink { font-family: var(--font-meta); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+  .brief-box {
+    width: 100%; resize: vertical; min-height: 92px;
+    background: var(--bg); color: var(--text); border: 1px solid var(--border);
+    padding: 11px 13px; font-size: 13px; line-height: 1.6; font-family: var(--font-body);
+  }
+  .brief-box:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+  .btn-row { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 2px; }
+  .btn {
+    border: 1px solid var(--text); background: transparent; color: var(--text);
+    padding: 9px 16px; font-family: var(--font-meta); font-size: 10px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    transition: background 0.18s ease, color 0.18s ease;
+  }
+  .btn:hover { background: var(--text); color: var(--bg); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--bg-elevated); }
+  .btn.primary:hover { background: var(--text); border-color: var(--text); }
+
+  .add-modal { max-width: 540px; }
+  .add-form { padding: 32px; display: flex; flex-direction: column; gap: 15px; }
+  .add-form h2 { margin: 0; font-family: var(--font-display); font-size: 24px; font-weight: var(--title-weight, 400); }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-family: var(--font-meta); font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--text-muted); }
+  .field input[type="text"], .field input[type="url"], .field textarea {
+    background: var(--bg); color: var(--text); border: 1px solid var(--border);
+    padding: 10px 12px; font-size: 13.5px; font-family: var(--font-body); width: 100%;
+  }
+  .field input:focus-visible, .field textarea:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+  .field input[type="file"] {
+    border: 1px dashed var(--border); padding: 14px; font-size: 12px;
+    background: var(--bg); color: var(--text-muted); width: 100%; font-family: var(--font-meta);
+  }
+  .drop-preview { width: 100%; aspect-ratio: 16/9; overflow: hidden; border: 1px solid var(--border); display: none; }
+  .drop-preview.has-img { display: block; }
+  .drop-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .form-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 4px; }
+
+  .toast {
+    position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: var(--bg); padding: 11px 20px;
+    font-family: var(--font-meta); font-size: 10.5px; letter-spacing: 0.1em;
+    text-transform: uppercase; z-index: 1200;
+  }
+  .toast[hidden] { display: none; }
+
+  /* ============================================================
+     ITERATION A — WALL LABEL
+     High-contrast Didot-class display against cool gallery putty.
+     Olive accent, letterspaced Gill Sans metadata, light sepia.
+     The most "fine art institution" of the three.
+     ============================================================ */
+  [data-style="wall"] {
+    --bg: #e7e2d6; --bg-elevated: #f1ede4; --text: #23201a; --text-muted: #7d7669;
+    --accent: #4a5240; --border: #cfc7b5;
+    --font-display: Didot, "Didot LT STD", "Bodoni MT", "Hoefler Text", Garamond, Georgia, serif;
+    --font-body: "Gill Sans", "Gill Sans MT", Optima, Candara, "Trebuchet MS", sans-serif;
+    --font-meta: "Gill Sans", "Gill Sans MT", Optima, Candara, "Trebuchet MS", sans-serif;
+    --page-pad: clamp(20px, 5vw, 64px);
+    --grid-cols: 3; --row-gap: 60px; --col-gap: 40px; --card-aspect: 3/2;
+    --media-filter: sepia(0.26) contrast(1.02);
+    --media-filter-hover: sepia(0.06) contrast(1.04);
+    --brand-size: 25px; --title-size: 24px; --title-lh: 1.15; --detail-title-size: 34px;
+    --body-gap: 9px; --tag-case: uppercase; --tag-track: 0.09em; --tag-size: 9.5px;
+    --chip-track: 0.11em;
+  }
+
+  /* ============================================================
+     ITERATION B — ARCHIVE PRESS
+     Warm manila stock, humanist old-style serif, monospace
+     captions. Two-up so plates run large, like a bound catalogue.
+     Ink-blue accent keeps it out of default-beige territory.
+     ============================================================ */
+  [data-style="archive"] {
+    --bg: #e6ddc9; --bg-elevated: #f0e9d9; --text: #221d14; --text-muted: #7c7059;
+    --accent: #2f4257; --border: #cbbfa2;
+    --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", "Hoefler Text", Georgia, serif;
+    --font-body: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --font-meta: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --page-pad: clamp(20px, 6vw, 88px);
+    --grid-cols: 2; --row-gap: 78px; --col-gap: 64px; --card-aspect: 3/2;
+    --media-filter: sepia(0.42) contrast(1.05) brightness(0.98);
+    --media-filter-hover: sepia(0.16) contrast(1.05) brightness(1.0);
+    --brand-size: 27px; --title-size: 27px; --title-lh: 1.18; --detail-title-size: 35px;
+    --body-gap: 10px; --tag-size: 10.5px; --tag-track: 0.02em;
+    --chip-size: 10.5px; --chip-track: 0.06em; --head-pad: 48px;
+    --filter-mb: 52px;
+  }
+  [data-style="archive"] .card-media { box-shadow: 0 1px 0 var(--border); }
+  [data-style="archive"] .card-index { font-style: normal; }
+  [data-style="archive"] .card-type { font-size: 9.5px; }
+
+  /* ============================================================
+     ITERATION C — MODERN PLAQUE
+     Cool stone ground, Optima-class humanist sans throughout,
+     near-neutral imagery inside a hairline frame. Tighter, more
+     contemporary. Single clay accent as the one warm note.
+     ============================================================ */
+  [data-style="modern"] {
+    --bg: #e4e3dd; --bg-elevated: #efeee9; --text: #1b1b19; --text-muted: #75746d;
+    --accent: #9c5a3c; --border: #cbcac2;
+    --font-display: Optima, "Gill Sans", "Gill Sans MT", Avenir, "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --font-body: Optima, "Gill Sans", "Gill Sans MT", Avenir, "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --font-meta: Optima, "Gill Sans", "Gill Sans MT", Avenir, "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --page-pad: clamp(20px, 4vw, 52px);
+    --grid-cols: 3; --row-gap: 44px; --col-gap: 28px; --card-aspect: 16/10;
+    --media-filter: saturate(0.9) contrast(1.03);
+    --media-filter-hover: saturate(1) contrast(1.03);
+    --media-border: 1px solid var(--border);
+    --brand-size: 20px; --brand-weight: 600; --brand-track: 0.01em;
+    --title-size: 18px; --title-lh: 1.28; --title-weight: 600; --title-track: 0.005em;
+    --detail-title-size: 27px;
+    --body-pad: 14px 0 0; --body-gap: 7px;
+    --tag-size: 10.5px; --tag-track: 0.03em;
+    --chip-size: 10.5px; --chip-track: 0.09em; --chip-type-weight: 700;
+    --plate-size: 9.5px; --type-size: 9.5px;
+  }
+  [data-style="modern"] .card-tags { border-top: none; padding-top: 4px; gap: 4px 10px; }
+  [data-style="modern"] .card-tags .tag::after { content: ""; }
+  [data-style="modern"] .card-title { margin-top: 1px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-media, .add-btn, .btn, .chip { transition: none !important; }
+  }
+</style>
+
+<div id="preview-bar">
+  <span class="pb-label">Gallery Plaque<br />iterations</span>
+  <button class="pb-style" data-style="wall"><em>A · Wall Label</em><span>Didot · olive · light sepia</span></button>
+  <button class="pb-style" data-style="archive"><em>B · Archive Press</em><span>Palatino · mono · two-up</span></button>
+  <button class="pb-style" data-style="modern"><em>C · Modern Plaque</em><span>Optima · clay · hairline frame</span></button>
+  <span class="pb-spacer"></span>
+  <button class="pb-reset" id="reset-data">Reset seed data</button>
+</div>
+
+<div id="app">
+  <header class="site-header">
+    <h1 class="brand">Inspiration Library</h1>
+    <button class="add-btn" id="open-add">Add screenshot</button>
+  </header>
+  <nav class="filter-bar" id="filter-bar"></nav>
+  <main class="grid" id="grid"></main>
+  <div class="empty-state" id="empty-state" hidden>Nothing matches these filters</div>
+</div>
+
+<div class="modal-backdrop" id="detail-backdrop" hidden>
+  <div class="modal detail-modal" id="detail-modal"></div>
+</div>
+
+<div class="modal-backdrop" id="add-backdrop" hidden>
+  <div class="modal add-modal">
+    <form class="add-form" id="add-form">
+      <h2>Add to the library</h2>
+      <div class="field">
+        <label for="f-image">Screenshot</label>
+        <input type="file" id="f-image" accept="image/*" required />
+        <div class="drop-preview" id="drop-preview"><img id="drop-preview-img" alt="" /></div>
+      </div>
+      <div class="field">
+        <label for="f-title">Title</label>
+        <input type="text" id="f-title" required placeholder="Crafting Culture" />
+      </div>
+      <div class="field">
+        <label for="f-url">Source URL (optional)</label>
+        <input type="url" id="f-url" placeholder="https://" />
+      </div>
+      <div class="field">
+        <label for="f-type">Design type</label>
+        <input type="text" id="f-type" required placeholder="Portfolio" />
+      </div>
+      <div class="field">
+        <label for="f-vocab">Design vocabulary (comma separated)</label>
+        <input type="text" id="f-vocab" required placeholder="serif display headline, warm putty ground" />
+      </div>
+      <div class="field">
+        <label for="f-brief">Brief, used by Copy prompt</label>
+        <textarea id="f-brief" class="brief-box" placeholder="What makes this design work"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn" id="cancel-add">Cancel</button>
+        <button type="submit" class="btn primary">Add card</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var SEED = [
+    {
+      id: "seed-1",
+      title: "Crafting Culture, Detroit",
+      image: "data:image/jpeg;base64,__CRAFTING_CULTURE_B64__",
+      sourceUrl: "",
+      type: "Studio Portfolio",
+      vocab: ["oversized grotesk display", "black on white", "editorial photo grid", "AI and CGI production"],
+      brief: "Massive bold grotesk headline stacked two lines on a pure white ground, black type at huge scale. Below it, an offset masonry grid of high-contrast editorial photography bleeding to the frame edge. No colour, no gradients, just scale, contrast, and type as the hero."
+    },
+    {
+      id: "seed-2",
+      title: "Outfit",
+      image: "data:image/jpeg;base64,__OUTFIT_B64__",
+      sourceUrl: "",
+      type: "E-commerce",
+      vocab: ["oversized display wordmark", "single saturated red", "flat colour ground", "product photo grid"],
+      brief: "Full-bleed saturated red as the page ground, with the brand wordmark set enormous inside a light reversal card. A tight four-up product photography grid sits beneath, shot black and white so it holds against the red field."
+    },
+    {
+      id: "seed-3",
+      title: "Our Projects, Kim Kneipp",
+      image: "data:image/jpeg;base64,__OUR_PROJECTS_B64__",
+      sourceUrl: "",
+      type: "Portfolio",
+      vocab: ["serif display headline", "warm putty ground", "sepia photography", "filterable tag navigation"],
+      brief: "Warm putty-beige ground carrying an oversized elegant serif headline in soft grey-green ink. A radiating hairline motif points down into a filter bar of tag categories, then a sepia-toned photography grid with small monospace captions beneath each image."
+    }
+  ];
+
+  var STORAGE_KEY = "inspiration-library-gallery-v1";
+  var state = { cards: [], activeFilters: [], style: "wall" };
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.cards) && parsed.cards.length) {
+          state.cards = parsed.cards;
+          state.style = parsed.style || "wall";
+          return;
+        }
+      }
+    } catch (e) {}
+    state.cards = SEED.slice();
+  }
+
+  function saveState() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards: state.cards, style: state.style })); } catch (e) {}
+  }
+
+  function resetToSeed() {
+    state.cards = SEED.slice();
+    state.activeFilters = [];
+    saveState(); render();
+    showToast("Reset to the three seed screenshots");
+  }
+
+  function facetsFor(card) {
+    var out = [{ label: card.type, facet: "type" }];
+    card.vocab.forEach(function (v) { out.push({ label: v, facet: "vocab" }); });
+    return out;
+  }
+
+  function allFacets() {
+    var map = {};
+    state.cards.forEach(function (card) {
+      facetsFor(card).forEach(function (f) {
+        var key = f.facet + ":" + f.label;
+        if (!map[key]) map[key] = { label: f.label, facet: f.facet, count: 0 };
+        map[key].count++;
+      });
+    });
+    var arr = Object.keys(map).map(function (k) { return map[k]; });
+    arr.sort(function (a, b) {
+      if (a.facet !== b.facet) return a.facet === "type" ? -1 : 1;
+      return b.count - a.count;
+    });
+    return arr;
+  }
+
+  function cardMatchesFilters(card) {
+    if (!state.activeFilters.length) return true;
+    var labels = facetsFor(card).map(function (f) { return f.facet + ":" + f.label; });
+    return state.activeFilters.some(function (f) { return labels.indexOf(f) !== -1; });
+  }
+
+  function toggleFilter(key) {
+    var i = state.activeFilters.indexOf(key);
+    if (i === -1) state.activeFilters.push(key); else state.activeFilters.splice(i, 1);
+    render();
+  }
+
+  function el(tag, attrs, children) {
+    var node = document.createElement(tag);
+    attrs = attrs || {};
+    Object.keys(attrs).forEach(function (k) {
+      if (k === "class") node.className = attrs[k];
+      else if (k === "text") node.textContent = attrs[k];
+      else if (k.indexOf("on") === 0 && typeof attrs[k] === "function") node.addEventListener(k.slice(2), attrs[k]);
+      else node.setAttribute(k, attrs[k]);
+    });
+    (children || []).forEach(function (c) { if (c) node.appendChild(c); });
+    return node;
+  }
+
+  function renderFilters() {
+    var bar = document.getElementById("filter-bar");
+    bar.innerHTML = "";
+    bar.appendChild(el("button", {
+      class: "chip" + (state.activeFilters.length === 0 ? " is-active" : ""),
+      "data-facet": "type",
+      onclick: function () { state.activeFilters = []; render(); }
+    }, [document.createTextNode("All"), el("span", { class: "chip-count", text: String(state.cards.length) })]));
+
+    allFacets().forEach(function (f) {
+      var key = f.facet + ":" + f.label;
+      bar.appendChild(el("button", {
+        class: "chip" + (state.activeFilters.indexOf(key) !== -1 ? " is-active" : ""),
+        "data-facet": f.facet,
+        onclick: function () { toggleFilter(key); }
+      }, [document.createTextNode(f.label), el("span", { class: "chip-count", text: String(f.count) })]));
+    });
+  }
+
+  function renderGrid() {
+    var grid = document.getElementById("grid");
+    var empty = document.getElementById("empty-state");
+    grid.innerHTML = "";
+    var visible = state.cards.filter(cardMatchesFilters);
+    empty.hidden = visible.length !== 0;
+
+    visible.forEach(function (card, i) {
+      var tagWrap = el("div", { class: "card-tags" });
+      card.vocab.slice(0, 4).forEach(function (v) { tagWrap.appendChild(el("span", { class: "tag", text: v })); });
+
+      var body = el("div", { class: "card-body" }, [
+        el("div", { class: "card-index", text: "Plate " + String(i + 1).padStart(2, "0") }),
+        el("h2", { class: "card-title", text: card.title }),
+        el("div", { class: "card-type", text: card.type }),
+        tagWrap
+      ]);
+
+      grid.appendChild(el("article", {
+        class: "card", tabindex: "0", role: "button",
+        onclick: function () { openDetail(card.id); },
+        onkeydown: function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDetail(card.id); } }
+      }, [
+        el("div", { class: "card-media" }, [el("img", { src: card.image, alt: card.title, loading: "lazy" })]),
+        body
+      ]));
+    });
+  }
+
+  function render() { renderFilters(); renderGrid(); saveState(); }
+
+  function openDetail(id) {
+    var card = state.cards.find(function (c) { return c.id === id; });
+    if (!card) return;
+    var modal = document.getElementById("detail-modal");
+    modal.innerHTML = "";
+
+    var tagWrap = el("div", { class: "detail-tags" });
+    card.vocab.forEach(function (v) { tagWrap.appendChild(el("span", { class: "tag", text: v })); });
+
+    var briefBox = el("textarea", { class: "brief-box" });
+    briefBox.value = card.brief || "";
+    briefBox.addEventListener("input", function () { card.brief = briefBox.value; saveState(); });
+
+    var linkRow = card.sourceUrl
+      ? el("a", { class: "detail-link", href: card.sourceUrl, target: "_blank", rel: "noopener noreferrer", text: "Visit site" })
+      : el("div", { class: "detail-nolink", text: "No source URL" });
+
+    modal.appendChild(el("div", { class: "detail-media" }, [el("img", { src: card.image, alt: card.title })]));
+    modal.appendChild(el("div", { class: "detail-body" }, [
+      el("div", { class: "detail-type", text: card.type }),
+      el("h2", { class: "detail-title", text: card.title }),
+      linkRow,
+      el("div", { class: "detail-label", text: "Design vocabulary" }),
+      tagWrap,
+      el("div", { class: "detail-label", text: "Brief" }),
+      briefBox,
+      el("div", { class: "btn-row" }, [
+        el("button", { class: "btn", type: "button", text: "Copy prompt", onclick: function () { copyText(briefBox.value); } }),
+        el("button", { class: "btn primary", type: "button", text: "Copy image", onclick: function () { copyImage(card.image); } })
+      ])
+    ]));
+    modal.appendChild(el("button", { class: "detail-close", "aria-label": "Close", text: "×", onclick: closeDetail }));
+
+    document.getElementById("detail-backdrop").hidden = false;
+  }
+
+  function closeDetail() { document.getElementById("detail-backdrop").hidden = true; }
+  document.getElementById("detail-backdrop").addEventListener("click", function (e) { if (e.target === this) closeDetail(); });
+
+  var pendingImage = null;
+  function openAdd() {
+    document.getElementById("add-form").reset();
+    document.getElementById("drop-preview").classList.remove("has-img");
+    pendingImage = null;
+    document.getElementById("add-backdrop").hidden = false;
+  }
+  function closeAdd() { document.getElementById("add-backdrop").hidden = true; }
+
+  document.getElementById("open-add").addEventListener("click", openAdd);
+  document.getElementById("cancel-add").addEventListener("click", closeAdd);
+  document.getElementById("add-backdrop").addEventListener("click", function (e) { if (e.target === this) closeAdd(); });
+
+  document.getElementById("f-image").addEventListener("change", function (e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      pendingImage = reader.result;
+      document.getElementById("drop-preview-img").src = pendingImage;
+      document.getElementById("drop-preview").classList.add("has-img");
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById("add-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!pendingImage) { showToast("Choose a screenshot first"); return; }
+    var title = document.getElementById("f-title").value.trim();
+    var type = document.getElementById("f-type").value.trim();
+    var vocab = document.getElementById("f-vocab").value.split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+    if (!title || !type || !vocab.length) { showToast("Title, type, and one tag are required"); return; }
+    var brief = document.getElementById("f-brief").value.trim();
+    if (!brief) brief = title + ", a " + type.toLowerCase() + " built around " + vocab.slice(0, 3).join(", ") + ".";
+
+    state.cards.unshift({
+      id: "card-" + Date.now(), title: title, image: pendingImage,
+      sourceUrl: document.getElementById("f-url").value.trim(),
+      type: type, vocab: vocab, brief: brief
+    });
+    closeAdd(); render();
+    showToast("Added " + title);
+  });
+
+  function showToast(msg) {
+    var t = document.getElementById("toast");
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function () { t.hidden = true; }, 2400);
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(
+        function () { showToast("Prompt copied"); },
+        function () { showToast("Could not copy, select the text manually"); }
+      );
+    } else { showToast("Clipboard unavailable in this browser"); }
+  }
+
+  function dataUrlToPngBlob(dataUrl) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () {
+        var c = document.createElement("canvas");
+        c.width = img.naturalWidth; c.height = img.naturalHeight;
+        c.getContext("2d").drawImage(img, 0, 0);
+        c.toBlob(function (b) { b ? resolve(b) : reject(new Error("toBlob failed")); }, "image/png");
+      };
+      img.onerror = reject;
+      img.src = dataUrl;
+    });
+  }
+
+  function copyImage(dataUrl) {
+    if (!navigator.clipboard || !window.ClipboardItem) { showToast("Image copy unsupported here"); return; }
+    dataUrlToPngBlob(dataUrl)
+      .then(function (blob) { return navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]); })
+      .then(function () { showToast("Image copied"); })
+      .catch(function () { showToast("Could not copy the image"); });
+  }
+
+  function setStyle(name) {
+    state.style = name;
+    document.documentElement.setAttribute("data-style", name);
+    document.querySelectorAll(".pb-style").forEach(function (b) {
+      b.classList.toggle("is-active", b.getAttribute("data-style") === name);
+    });
+    saveState();
+  }
+
+  document.querySelectorAll(".pb-style").forEach(function (b) {
+    b.addEventListener("click", function () { setStyle(b.getAttribute("data-style")); });
+  });
+  document.getElementById("reset-data").addEventListener("click", resetToSeed);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closeDetail(); closeAdd(); } });
+
+  loadState();
+  setStyle(state.style);
+  render();
+})();
+</script>
