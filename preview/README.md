@@ -76,3 +76,21 @@ iterations will look closer to one another than they do on a Mac.
 
 Once a direction is chosen, the intended faces can be self-hosted as `@font-face` data URIs
 so they render identically everywhere.
+
+---
+
+# Modern Plaque — Three Iterations (round 2)
+
+`modern-iterations.html`. Built from Iteration C, with the requested changes applied to
+all three: card titles in the Archive Press serif, boxed rounded filter buttons, larger
+type throughout, no colour grading on the images, and a different hover treatment each.
+
+| Iteration | Hover | Palette | Controls |
+|---|---|---|---|
+| **D · Lift** | Frame rises 6px on a tinted shadow, hairline darkens | Cool stone, clay accent | Pill |
+| **E · Rule** | Underline draws beneath the title, frame hairline turns accent, nothing moves | Pale cool grey, ink blue accent | 8px rounded |
+| **F · Plate** | Caption bar slides up over the image, surfacing the source link | Warm stone, near-black accent so screenshots carry the only colour | Pill |
+
+Seed images were re-encoded at 1500px wide, quality 86, no chroma subsampling
+(previously 1000px / 78 / 4:2:0), which is what the earlier softness came from.
+Sepia and saturation filters were removed entirely.

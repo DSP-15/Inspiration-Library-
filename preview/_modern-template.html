@@ -1,0 +1,667 @@
+<title>Modern Plaque — Three Iterations</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  img { max-width: 100%; display: block; }
+  button { font: inherit; cursor: pointer; }
+  a { color: inherit; }
+
+  /* ============ PREVIEW BAR (tooling chrome) ============ */
+  #preview-bar {
+    position: sticky; top: 0; z-index: 999;
+    display: flex; align-items: stretch;
+    background: #17161a; color: #cfcfcf;
+    border-bottom: 1px solid #2c2b30;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px; overflow-x: auto;
+  }
+  #preview-bar .pb-label {
+    padding: 0 16px; white-space: nowrap; color: #79767f;
+    letter-spacing: 0.09em; text-transform: uppercase; font-size: 10px;
+    border-right: 1px solid #2c2b30; display: flex; align-items: center;
+  }
+  #preview-bar .pb-style {
+    padding: 11px 18px; white-space: nowrap; text-align: left;
+    background: transparent; border: none; color: #9c9aa3;
+    border-right: 1px solid #232228;
+    transition: background 0.15s ease, color 0.15s ease;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  #preview-bar .pb-style em { font-style: normal; font-weight: 600; font-size: 12px; }
+  #preview-bar .pb-style span { font-size: 9.5px; color: #6f6d77; letter-spacing: 0.04em; }
+  #preview-bar .pb-style:hover { background: #201f25; color: #eaeaea; }
+  #preview-bar .pb-style.is-active { background: #ece9e2; color: #17161a; }
+  #preview-bar .pb-style.is-active span { color: #57545c; }
+  #preview-bar .pb-spacer { flex: 1; }
+  #preview-bar .pb-reset {
+    padding: 11px 16px; background: transparent; border: none;
+    border-left: 1px solid #2c2b30; color: #79767f; white-space: nowrap;
+  }
+  #preview-bar .pb-reset:hover { color: #e08a6a; }
+
+  /* ============ SHARED SHELL ============ */
+  body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; font-family: var(--font-body); }
+  #app { min-height: 100dvh; background: var(--bg); }
+
+  .site-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 24px; padding: 46px var(--page-pad) 28px;
+  }
+  .brand { font-family: var(--font-title); font-size: 27px; margin: 0; font-weight: 400; letter-spacing: 0.004em; }
+  .add-btn {
+    border: 1px solid var(--text); background: transparent; color: var(--text);
+    padding: 10px 20px; border-radius: var(--control-radius);
+    font-size: 12px; font-family: var(--font-body);
+    letter-spacing: 0.03em; white-space: nowrap;
+    transition: background 0.18s ease, color 0.18s ease;
+  }
+  .add-btn:hover { background: var(--text); color: var(--bg); }
+
+  /* --- boxed rounded filter buttons --- */
+  .filter-bar {
+    display: flex; flex-wrap: wrap; gap: 9px;
+    padding: 0 var(--page-pad) 30px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 44px;
+  }
+  .chip {
+    border: 1px solid var(--chip-border); background: var(--chip-bg);
+    color: var(--chip-text); border-radius: var(--control-radius);
+    padding: 8px 15px; font-family: var(--font-body);
+    font-size: 12.5px; letter-spacing: 0.015em; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 7px;
+    transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+  }
+  .chip:hover { border-color: var(--text); color: var(--text); }
+  .chip .chip-count {
+    font-size: 10.5px; color: var(--chip-count); font-variant-numeric: tabular-nums;
+  }
+  .chip.is-active {
+    background: var(--accent); border-color: var(--accent);
+    color: var(--accent-on); font-weight: 500;
+  }
+  .chip.is-active .chip-count { color: var(--accent-on); opacity: 0.72; }
+  .chip[data-facet="type"] { font-weight: 600; }
+  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .grid {
+    display: grid; gap: var(--row-gap) var(--col-gap);
+    grid-template-columns: repeat(3, 1fr);
+    padding: 0 var(--page-pad) 110px;
+  }
+  @media (max-width: 1080px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 680px)  { .grid { grid-template-columns: 1fr; } }
+
+  .card { background: transparent; border: none; padding: 0; text-align: left; display: block; width: 100%; }
+  .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 8px; }
+
+  .card-frame {
+    position: relative; overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    transition: border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+  }
+  .card-frame img { width: 100%; aspect-ratio: 3/2; object-fit: cover; }
+
+  .card-overlay {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: var(--overlay-bg); color: var(--overlay-text);
+    padding: 12px 15px; font-size: 12px; letter-spacing: 0.03em;
+    display: none; align-items: center; justify-content: space-between;
+    transform: translateY(100%); transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .card-body { padding: 17px 0 0; display: flex; flex-direction: column; gap: 9px; }
+  .card-index {
+    font-size: 11px; letter-spacing: 0.13em; text-transform: uppercase;
+    color: var(--text-muted); font-variant-numeric: tabular-nums;
+  }
+  .card-title {
+    margin: 0; font-family: var(--font-title);
+    font-size: 24px; line-height: 1.24; font-weight: 400;
+    letter-spacing: 0.002em; text-wrap: balance;
+    position: relative; display: inline-block;
+  }
+  .card-title::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -3px; height: 1px;
+    background: var(--accent); transform: scaleX(0); transform-origin: left;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .card-type {
+    font-size: 11.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent);
+    font-weight: 600;
+  }
+  .card-tags { display: flex; flex-wrap: wrap; gap: 5px 13px; margin-top: 3px; }
+  .card-tags .tag { font-size: 12px; color: var(--text-muted); letter-spacing: 0.01em; }
+
+  .empty-state { padding: 90px 20px; text-align: center; color: var(--text-muted); font-size: 13.5px; }
+
+  /* ============ MODALS ============ */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 1000;
+    background: color-mix(in srgb, var(--text) 60%, transparent);
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .modal-backdrop[hidden] { display: none; }
+  .modal {
+    background: var(--bg-elevated); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--modal-radius);
+    max-width: 1020px; width: 100%; max-height: 90vh; overflow-y: auto;
+  }
+  .detail-modal { display: grid; grid-template-columns: 1.2fr 1fr; position: relative; overflow: hidden; }
+  @media (max-width: 820px) { .detail-modal { grid-template-columns: 1fr; } }
+  .detail-media {
+    background: var(--bg); display: flex; align-items: center; justify-content: center;
+    padding: 24px; border-right: 1px solid var(--border);
+  }
+  .detail-media img { width: 100%; height: auto; max-height: 74vh; object-fit: contain; }
+  .detail-body { padding: 36px 36px 32px; display: flex; flex-direction: column; gap: 16px; }
+  .detail-close {
+    position: absolute; top: 22px; right: 22px;
+    background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 50%;
+    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: var(--text-muted); line-height: 1;
+  }
+  .detail-close:hover { color: var(--text); border-color: var(--text); }
+  .detail-type { font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .detail-title { margin: 0; font-family: var(--font-title); font-size: 33px; line-height: 1.16; font-weight: 400; }
+  .detail-label { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  .detail-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+  .detail-tags .tag {
+    font-size: 12px; color: var(--text-muted);
+    border: 1px solid var(--border); border-radius: var(--control-radius);
+    padding: 5px 11px; white-space: nowrap;
+  }
+  .detail-link { font-size: 12.5px; color: var(--accent); letter-spacing: 0.02em; }
+  .detail-nolink { font-size: 12.5px; color: var(--text-muted); letter-spacing: 0.02em; }
+  .brief-box {
+    width: 100%; resize: vertical; min-height: 100px;
+    background: var(--bg); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--control-radius);
+    padding: 12px 14px; font-size: 13.5px; line-height: 1.62; font-family: var(--font-body);
+  }
+  .brief-box:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 2px; }
+  .btn {
+    border: 1px solid var(--text); background: transparent; color: var(--text);
+    padding: 10px 18px; border-radius: var(--control-radius);
+    font-family: var(--font-body); font-size: 12px; letter-spacing: 0.02em;
+    transition: background 0.18s ease, color 0.18s ease;
+  }
+  .btn:hover { background: var(--text); color: var(--bg); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-on); }
+  .btn.primary:hover { background: var(--text); border-color: var(--text); color: var(--bg); }
+
+  .add-modal { max-width: 560px; }
+  .add-form { padding: 34px; display: flex; flex-direction: column; gap: 16px; }
+  .add-form h2 { margin: 0; font-family: var(--font-title); font-size: 26px; font-weight: 400; }
+  .field { display: flex; flex-direction: column; gap: 7px; }
+  .field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.13em; color: var(--text-muted); }
+  .field input[type="text"], .field input[type="url"], .field textarea {
+    background: var(--bg); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--control-radius);
+    padding: 11px 13px; font-size: 13.5px; font-family: var(--font-body); width: 100%;
+  }
+  .field input:focus-visible, .field textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .field input[type="file"] {
+    border: 1px dashed var(--border); border-radius: var(--control-radius);
+    padding: 15px; font-size: 12.5px; background: var(--bg); color: var(--text-muted); width: 100%;
+  }
+  .drop-preview { width: 100%; aspect-ratio: 3/2; overflow: hidden; border: 1px solid var(--border); border-radius: var(--control-radius); display: none; }
+  .drop-preview.has-img { display: block; }
+  .drop-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+
+  .toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: var(--bg); padding: 12px 22px;
+    border-radius: var(--control-radius); font-size: 12.5px; z-index: 1200;
+  }
+  .toast[hidden] { display: none; }
+
+  /* ============================================================
+     SHARED BASE for all three: Modern Plaque structure, serif
+     titles, boxed rounded controls, no colour grading anywhere.
+     ============================================================ */
+  [data-style] {
+    --font-title: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", "Hoefler Text", Georgia, serif;
+    --font-body: Optima, "Gill Sans", "Gill Sans MT", Avenir, "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --page-pad: clamp(20px, 4.5vw, 60px);
+  }
+
+  /* ============================================================
+     D — LIFT
+     Cool stone, clay accent. Hover lifts the frame on a soft
+     tinted shadow and darkens its hairline. Pill controls.
+     ============================================================ */
+  [data-style="lift"] {
+    --bg: #e5e4de; --bg-elevated: #f0efea; --text: #1b1b19; --text-muted: #6f6e67;
+    --accent: #9c5a3c; --accent-on: #f4f2ed; --border: #c9c8c0;
+    --chip-bg: #efeee9; --chip-border: #cdccc4; --chip-text: #3a3a35; --chip-count: #8d8c84;
+    --control-radius: 999px; --modal-radius: 16px;
+    --row-gap: 52px; --col-gap: 30px;
+  }
+  [data-style="lift"] .card:hover .card-frame,
+  [data-style="lift"] .card:focus-visible .card-frame {
+    transform: translateY(-6px);
+    border-color: var(--text);
+    box-shadow: 0 14px 30px -12px rgba(60, 48, 40, 0.42);
+  }
+
+  /* ============================================================
+     E — RULE
+     Paler cool ground, ink blue-grey accent. Hover draws an
+     underline beneath the title and shifts the frame hairline to
+     the accent. Nothing moves. Soft 8px rounded controls.
+     ============================================================ */
+  [data-style="rule"] {
+    --bg: #e9e8e3; --bg-elevated: #f3f2ee; --text: #1a1d20; --text-muted: #6d7176;
+    --accent: #2c3b4a; --accent-on: #f1f2f3; --border: #cdcdc7;
+    --chip-bg: transparent; --chip-border: #c4c5c0; --chip-text: #3c4045; --chip-count: #8b8f93;
+    --control-radius: 8px; --modal-radius: 10px;
+    --row-gap: 54px; --col-gap: 32px;
+  }
+  [data-style="rule"] .card:hover .card-frame,
+  [data-style="rule"] .card:focus-visible .card-frame { border-color: var(--accent); }
+  [data-style="rule"] .card:hover .card-title::after,
+  [data-style="rule"] .card:focus-visible .card-title::after { transform: scaleX(1); }
+
+  /* ============================================================
+     F — PLATE
+     Warm stone, near-black accent so the screenshots carry the
+     only colour on the page. Hover slides a caption bar up over
+     the image bottom, surfacing the source link. Pill controls.
+     ============================================================ */
+  [data-style="plate"] {
+    --bg: #e8e5db; --bg-elevated: #f2f0e8; --text: #24241f; --text-muted: #737065;
+    --accent: #24241f; --accent-on: #f2f0e8; --border: #cbc8bb;
+    --chip-bg: #f2f0e8; --chip-border: #cbc8bb; --chip-text: #3a382f; --chip-count: #8b8878;
+    --overlay-bg: rgba(36, 36, 31, 0.9); --overlay-text: #f2f0e8;
+    --control-radius: 999px; --modal-radius: 14px;
+    --row-gap: 50px; --col-gap: 28px;
+  }
+  [data-style="plate"] .card-overlay { display: flex; }
+  [data-style="plate"] .card:hover .card-overlay,
+  [data-style="plate"] .card:focus-visible .card-overlay { transform: translateY(0); }
+  [data-style="plate"] .card:hover .card-frame,
+  [data-style="plate"] .card:focus-visible .card-frame { border-color: var(--text); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card-frame, .card-overlay, .card-title::after, .chip, .btn, .add-btn { transition: none !important; }
+    [data-style="lift"] .card:hover .card-frame { transform: none; }
+  }
+</style>
+
+<div id="preview-bar">
+  <span class="pb-label">Modern Plaque<br />iterations</span>
+  <button class="pb-style" data-style="lift"><em>D · Lift</em><span>clay · frame lifts on shadow</span></button>
+  <button class="pb-style" data-style="rule"><em>E · Rule</em><span>ink blue · underline draws in</span></button>
+  <button class="pb-style" data-style="plate"><em>F · Plate</em><span>near-black · caption slides up</span></button>
+  <span class="pb-spacer"></span>
+  <button class="pb-reset" id="reset-data">Reset seed data</button>
+</div>
+
+<div id="app">
+  <header class="site-header">
+    <h1 class="brand">Inspiration Library</h1>
+    <button class="add-btn" id="open-add">Add screenshot</button>
+  </header>
+  <nav class="filter-bar" id="filter-bar"></nav>
+  <main class="grid" id="grid"></main>
+  <div class="empty-state" id="empty-state" hidden>Nothing matches these filters</div>
+</div>
+
+<div class="modal-backdrop" id="detail-backdrop" hidden>
+  <div class="modal detail-modal" id="detail-modal"></div>
+</div>
+
+<div class="modal-backdrop" id="add-backdrop" hidden>
+  <div class="modal add-modal">
+    <form class="add-form" id="add-form">
+      <h2>Add to the library</h2>
+      <div class="field">
+        <label for="f-image">Screenshot</label>
+        <input type="file" id="f-image" accept="image/*" required />
+        <div class="drop-preview" id="drop-preview"><img id="drop-preview-img" alt="" /></div>
+      </div>
+      <div class="field">
+        <label for="f-title">Title</label>
+        <input type="text" id="f-title" required placeholder="Crafting Culture" />
+      </div>
+      <div class="field">
+        <label for="f-url">Source URL (optional)</label>
+        <input type="url" id="f-url" placeholder="https://" />
+      </div>
+      <div class="field">
+        <label for="f-type">Design type</label>
+        <input type="text" id="f-type" required placeholder="Portfolio" />
+      </div>
+      <div class="field">
+        <label for="f-vocab">Design vocabulary (comma separated)</label>
+        <input type="text" id="f-vocab" required placeholder="serif display headline, warm putty ground" />
+      </div>
+      <div class="field">
+        <label for="f-brief">Brief, used by Copy prompt</label>
+        <textarea id="f-brief" class="brief-box" placeholder="What makes this design work"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn" id="cancel-add">Cancel</button>
+        <button type="submit" class="btn primary">Add card</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var SEED = [
+    {
+      id: "seed-1",
+      title: "Crafting Culture, Detroit",
+      image: "data:image/jpeg;base64,__CRAFTING_CULTURE_B64__",
+      sourceUrl: "",
+      type: "Studio Portfolio",
+      vocab: ["oversized grotesk display", "black on white", "editorial photo grid", "AI and CGI production"],
+      brief: "Massive bold grotesk headline stacked two lines on a pure white ground, black type at huge scale. Below it, an offset masonry grid of high-contrast editorial photography bleeding to the frame edge. No colour, no gradients, just scale, contrast, and type as the hero."
+    },
+    {
+      id: "seed-2",
+      title: "Outfit",
+      image: "data:image/jpeg;base64,__OUTFIT_B64__",
+      sourceUrl: "",
+      type: "E-commerce",
+      vocab: ["oversized display wordmark", "single saturated red", "flat colour ground", "product photo grid"],
+      brief: "Full-bleed saturated red as the page ground, with the brand wordmark set enormous inside a light reversal card. A tight four-up product photography grid sits beneath, shot black and white so it holds against the red field."
+    },
+    {
+      id: "seed-3",
+      title: "Our Projects, Kim Kneipp",
+      image: "data:image/jpeg;base64,__OUR_PROJECTS_B64__",
+      sourceUrl: "",
+      type: "Portfolio",
+      vocab: ["serif display headline", "warm putty ground", "sepia photography", "filterable tag navigation"],
+      brief: "Warm putty-beige ground carrying an oversized elegant serif headline in soft grey-green ink. A radiating hairline motif points down into a filter bar of tag categories, then a sepia-toned photography grid with small monospace captions beneath each image."
+    }
+  ];
+
+  var STORAGE_KEY = "inspiration-library-modern-v2";
+  var state = { cards: [], activeFilters: [], style: "lift" };
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.cards) && parsed.cards.length) {
+          state.cards = parsed.cards;
+          state.style = parsed.style || "lift";
+          return;
+        }
+      }
+    } catch (e) {}
+    state.cards = SEED.slice();
+  }
+
+  function saveState() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards: state.cards, style: state.style })); } catch (e) {}
+  }
+
+  function resetToSeed() {
+    state.cards = SEED.slice();
+    state.activeFilters = [];
+    saveState(); render();
+    showToast("Reset to the three seed screenshots");
+  }
+
+  function facetsFor(card) {
+    var out = [{ label: card.type, facet: "type" }];
+    card.vocab.forEach(function (v) { out.push({ label: v, facet: "vocab" }); });
+    return out;
+  }
+
+  function allFacets() {
+    var map = {};
+    state.cards.forEach(function (card) {
+      facetsFor(card).forEach(function (f) {
+        var key = f.facet + ":" + f.label;
+        if (!map[key]) map[key] = { label: f.label, facet: f.facet, count: 0 };
+        map[key].count++;
+      });
+    });
+    var arr = Object.keys(map).map(function (k) { return map[k]; });
+    arr.sort(function (a, b) {
+      if (a.facet !== b.facet) return a.facet === "type" ? -1 : 1;
+      return b.count - a.count;
+    });
+    return arr;
+  }
+
+  function cardMatchesFilters(card) {
+    if (!state.activeFilters.length) return true;
+    var labels = facetsFor(card).map(function (f) { return f.facet + ":" + f.label; });
+    return state.activeFilters.some(function (f) { return labels.indexOf(f) !== -1; });
+  }
+
+  function toggleFilter(key) {
+    var i = state.activeFilters.indexOf(key);
+    if (i === -1) state.activeFilters.push(key); else state.activeFilters.splice(i, 1);
+    render();
+  }
+
+  function el(tag, attrs, children) {
+    var node = document.createElement(tag);
+    attrs = attrs || {};
+    Object.keys(attrs).forEach(function (k) {
+      if (k === "class") node.className = attrs[k];
+      else if (k === "text") node.textContent = attrs[k];
+      else if (k.indexOf("on") === 0 && typeof attrs[k] === "function") node.addEventListener(k.slice(2), attrs[k]);
+      else node.setAttribute(k, attrs[k]);
+    });
+    (children || []).forEach(function (c) { if (c) node.appendChild(c); });
+    return node;
+  }
+
+  function renderFilters() {
+    var bar = document.getElementById("filter-bar");
+    bar.innerHTML = "";
+    bar.appendChild(el("button", {
+      class: "chip" + (state.activeFilters.length === 0 ? " is-active" : ""),
+      "data-facet": "type",
+      onclick: function () { state.activeFilters = []; render(); }
+    }, [document.createTextNode("All"), el("span", { class: "chip-count", text: String(state.cards.length) })]));
+
+    allFacets().forEach(function (f) {
+      var key = f.facet + ":" + f.label;
+      bar.appendChild(el("button", {
+        class: "chip" + (state.activeFilters.indexOf(key) !== -1 ? " is-active" : ""),
+        "data-facet": f.facet,
+        onclick: function () { toggleFilter(key); }
+      }, [document.createTextNode(f.label), el("span", { class: "chip-count", text: String(f.count) })]));
+    });
+  }
+
+  function renderGrid() {
+    var grid = document.getElementById("grid");
+    var empty = document.getElementById("empty-state");
+    grid.innerHTML = "";
+    var visible = state.cards.filter(cardMatchesFilters);
+    empty.hidden = visible.length !== 0;
+
+    visible.forEach(function (card, i) {
+      var tagWrap = el("div", { class: "card-tags" });
+      card.vocab.slice(0, 4).forEach(function (v) { tagWrap.appendChild(el("span", { class: "tag", text: v })); });
+
+      var overlay = el("div", { class: "card-overlay" }, [
+        el("span", { text: card.sourceUrl ? "View source" : "Open plate" }),
+        el("span", { text: "↗" })
+      ]);
+
+      var frame = el("div", { class: "card-frame" }, [
+        el("img", { src: card.image, alt: card.title, loading: "lazy" }),
+        overlay
+      ]);
+
+      grid.appendChild(el("article", {
+        class: "card", tabindex: "0", role: "button",
+        onclick: function () { openDetail(card.id); },
+        onkeydown: function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDetail(card.id); } }
+      }, [
+        frame,
+        el("div", { class: "card-body" }, [
+          el("div", { class: "card-index", text: "Plate " + String(i + 1).padStart(2, "0") }),
+          el("h2", { class: "card-title", text: card.title }),
+          el("div", { class: "card-type", text: card.type }),
+          tagWrap
+        ])
+      ]));
+    });
+  }
+
+  function render() { renderFilters(); renderGrid(); saveState(); }
+
+  function openDetail(id) {
+    var card = state.cards.find(function (c) { return c.id === id; });
+    if (!card) return;
+    var modal = document.getElementById("detail-modal");
+    modal.innerHTML = "";
+
+    var tagWrap = el("div", { class: "detail-tags" });
+    card.vocab.forEach(function (v) { tagWrap.appendChild(el("span", { class: "tag", text: v })); });
+
+    var briefBox = el("textarea", { class: "brief-box" });
+    briefBox.value = card.brief || "";
+    briefBox.addEventListener("input", function () { card.brief = briefBox.value; saveState(); });
+
+    var linkRow = card.sourceUrl
+      ? el("a", { class: "detail-link", href: card.sourceUrl, target: "_blank", rel: "noopener noreferrer", text: "Visit site ↗" })
+      : el("div", { class: "detail-nolink", text: "No source URL" });
+
+    modal.appendChild(el("div", { class: "detail-media" }, [el("img", { src: card.image, alt: card.title })]));
+    modal.appendChild(el("div", { class: "detail-body" }, [
+      el("div", { class: "detail-type", text: card.type }),
+      el("h2", { class: "detail-title", text: card.title }),
+      linkRow,
+      el("div", { class: "detail-label", text: "Design vocabulary" }),
+      tagWrap,
+      el("div", { class: "detail-label", text: "Brief" }),
+      briefBox,
+      el("div", { class: "btn-row" }, [
+        el("button", { class: "btn", type: "button", text: "Copy prompt", onclick: function () { copyText(briefBox.value); } }),
+        el("button", { class: "btn primary", type: "button", text: "Copy image", onclick: function () { copyImage(card.image); } })
+      ])
+    ]));
+    modal.appendChild(el("button", { class: "detail-close", "aria-label": "Close", text: "×", onclick: closeDetail }));
+
+    document.getElementById("detail-backdrop").hidden = false;
+  }
+
+  function closeDetail() { document.getElementById("detail-backdrop").hidden = true; }
+  document.getElementById("detail-backdrop").addEventListener("click", function (e) { if (e.target === this) closeDetail(); });
+
+  var pendingImage = null;
+  function openAdd() {
+    document.getElementById("add-form").reset();
+    document.getElementById("drop-preview").classList.remove("has-img");
+    pendingImage = null;
+    document.getElementById("add-backdrop").hidden = false;
+  }
+  function closeAdd() { document.getElementById("add-backdrop").hidden = true; }
+
+  document.getElementById("open-add").addEventListener("click", openAdd);
+  document.getElementById("cancel-add").addEventListener("click", closeAdd);
+  document.getElementById("add-backdrop").addEventListener("click", function (e) { if (e.target === this) closeAdd(); });
+
+  document.getElementById("f-image").addEventListener("change", function (e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      pendingImage = reader.result;
+      document.getElementById("drop-preview-img").src = pendingImage;
+      document.getElementById("drop-preview").classList.add("has-img");
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById("add-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!pendingImage) { showToast("Choose a screenshot first"); return; }
+    var title = document.getElementById("f-title").value.trim();
+    var type = document.getElementById("f-type").value.trim();
+    var vocab = document.getElementById("f-vocab").value.split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+    if (!title || !type || !vocab.length) { showToast("Title, type, and one tag are required"); return; }
+    var brief = document.getElementById("f-brief").value.trim();
+    if (!brief) brief = title + ", a " + type.toLowerCase() + " built around " + vocab.slice(0, 3).join(", ") + ".";
+
+    state.cards.unshift({
+      id: "card-" + Date.now(), title: title, image: pendingImage,
+      sourceUrl: document.getElementById("f-url").value.trim(),
+      type: type, vocab: vocab, brief: brief
+    });
+    closeAdd(); render();
+    showToast("Added " + title);
+  });
+
+  function showToast(msg) {
+    var t = document.getElementById("toast");
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(function () { t.hidden = true; }, 2400);
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(
+        function () { showToast("Prompt copied"); },
+        function () { showToast("Could not copy, select the text manually"); }
+      );
+    } else { showToast("Clipboard unavailable in this browser"); }
+  }
+
+  function dataUrlToPngBlob(dataUrl) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () {
+        var c = document.createElement("canvas");
+        c.width = img.naturalWidth; c.height = img.naturalHeight;
+        c.getContext("2d").drawImage(img, 0, 0);
+        c.toBlob(function (b) { b ? resolve(b) : reject(new Error("toBlob failed")); }, "image/png");
+      };
+      img.onerror = reject;
+      img.src = dataUrl;
+    });
+  }
+
+  function copyImage(dataUrl) {
+    if (!navigator.clipboard || !window.ClipboardItem) { showToast("Image copy unsupported here"); return; }
+    dataUrlToPngBlob(dataUrl)
+      .then(function (blob) { return navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]); })
+      .then(function () { showToast("Image copied"); })
+      .catch(function () { showToast("Could not copy the image"); });
+  }
+
+  function setStyle(name) {
+    state.style = name;
+    document.documentElement.setAttribute("data-style", name);
+    document.querySelectorAll(".pb-style").forEach(function (b) {
+      b.classList.toggle("is-active", b.getAttribute("data-style") === name);
+    });
+    saveState();
+  }
+
+  document.querySelectorAll(".pb-style").forEach(function (b) {
+    b.addEventListener("click", function () { setStyle(b.getAttribute("data-style")); });
+  });
+  document.getElementById("reset-data").addEventListener("click", resetToSeed);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closeDetail(); closeAdd(); } });
+
+  loadState();
+  setStyle(state.style);
+  render();
+})();
+</script>
