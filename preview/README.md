@@ -94,3 +94,56 @@ type throughout, no colour grading on the images, and a different hover treatmen
 Seed images were re-encoded at 1500px wide, quality 86, no chroma subsampling
 (previously 1000px / 78 / 4:2:0), which is what the earlier softness came from.
 Sepia and saturation filters were removed entirely.
+
+---
+
+# Inspiration Library (Rule) — the chosen direction
+
+`inspiration-library.html`, built from `_library-template.html`.
+
+## Tagging
+
+Free-text tags were the reason the filter bar fragmented into one-off terms like
+"filterable tag navigation". Replaced with a **controlled vocabulary**: one design type
+from a fixed list, plus terms drawn from four axes (Layout, Typography, Colour, Imagery).
+Because everyone picks from the same list, tags accumulate counts and the filters find
+real patterns.
+
+The **Colour axis is read off the image**. On upload the page samples the screenshot on a
+64x64 canvas and measures average lightness, saturation, lightness spread, and hue
+distribution, then pre-selects colour terms. Measured, not guessed, and deliberately
+conservative: a term that fires on everything stops discriminating. Current behaviour on
+the seeds:
+
+- Crafting Culture -> cool neutral ground, high contrast
+- Outfit -> single saturated accent
+- Our Projects -> muted palette
+
+The **brief writes itself** from the type and selected vocabulary, and stays editable.
+
+## Filter fine-tuning
+
+Below 6 references every tag shows, because the bar would otherwise be empty. Past 6,
+only tags carried by two or more references stay in the bar; one-off tags remain on their
+card and move behind a "Show N one-off tags" toggle.
+
+## What is not AI
+
+A published Artifact is a static page. Its only runtime capabilities are `downloads` and
+`mcp`; there is no model-inference capability, so the page cannot send a screenshot to
+Claude for tagging. The controlled vocabulary plus pixel-read colour is what is achievable
+client-side. True vision tagging needs a server, see below.
+
+## Path to real AI tagging
+
+A small backend endpoint that accepts the image and returns structured JSON constrained to
+the same vocabulary in this file:
+
+    POST /api/tag  ->  { type, vocab[], brief }
+
+Anthropic's API with a JSON schema over the `TYPES` and `AXES` constants keeps the model on
+the controlled vocabulary rather than inventing terms. The front end changes only in the add
+flow: call the endpoint, pre-select what comes back, leave every term editable.
+
+In the meantime the same result is available by pushing screenshots to this repository and
+asking for them to be tagged directly.
