@@ -1,0 +1,737 @@
+<title>Inspiration Library — Style Preview</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  /* ============ RESET / BASE ============ */
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    -webkit-font-smoothing: antialiased;
+    background: #111;
+    color: #eee;
+  }
+  img { max-width: 100%; display: block; }
+  button { font: inherit; cursor: pointer; }
+  a { color: inherit; }
+
+  /* ============ PREVIEW CONTROL BAR (not part of any style — meta tooling) ============ */
+  #preview-bar {
+    position: sticky; top: 0; z-index: 999;
+    display: flex; align-items: center; gap: 0;
+    background: #0d0d0d; color: #cfcfcf;
+    border-bottom: 1px solid #2a2a2a;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    overflow-x: auto;
+  }
+  #preview-bar .pb-label {
+    padding: 0 14px; white-space: nowrap; color: #7a7a7a;
+    letter-spacing: 0.06em; text-transform: uppercase; font-size: 10.5px;
+    border-right: 1px solid #2a2a2a; align-self: stretch; display: flex; align-items: center;
+  }
+  #preview-bar .pb-style {
+    padding: 12px 16px; white-space: nowrap;
+    background: transparent; border: none; color: #9c9c9c;
+    border-right: 1px solid #222;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  #preview-bar .pb-style:hover { background: #191919; color: #eaeaea; }
+  #preview-bar .pb-style.is-active { background: #eaeaea; color: #0d0d0d; font-weight: 600; }
+  #preview-bar .pb-spacer { flex: 1; }
+  #preview-bar .pb-reset {
+    padding: 12px 16px; background: transparent; border: none; border-left: 1px solid #2a2a2a;
+    color: #7a7a7a; white-space: nowrap;
+  }
+  #preview-bar .pb-reset:hover { color: #ff8a65; }
+
+  /* ============ SHARED APP SHELL ============ */
+  #app { min-height: 100dvh; background: var(--bg); color: var(--text); }
+  body { background: var(--bg); color: var(--text); }
+
+  .site-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px clamp(16px, 4vw, 48px);
+  }
+  .brand { font-weight: 700; letter-spacing: -0.01em; }
+  .add-btn {
+    border: 1px solid var(--border);
+    background: var(--text);
+    color: var(--bg);
+    padding: 9px 18px;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .add-btn:active { transform: scale(0.98); }
+
+  .filter-bar {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    padding: 0 clamp(16px, 4vw, 48px) 20px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 13px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .chip[data-facet="type"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .chip[data-facet="vocab"] { background: transparent; color: var(--text-muted); }
+  .chip.is-active { background: var(--accent) !important; color: var(--accent-text) !important; border-color: var(--accent) !important; }
+  .chip .chip-count { opacity: 0.6; font-variant-numeric: tabular-nums; }
+
+  .grid {
+    display: grid;
+    gap: var(--grid-gap, 24px);
+    grid-template-columns: repeat(var(--grid-cols, 4), 1fr);
+    padding: 4px clamp(16px, 4vw, 48px) 80px;
+  }
+  @media (max-width: 1100px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    position: relative;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    text-align: left;
+    display: flex; flex-direction: column;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .card:hover { transform: translateY(-2px); }
+  .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .card-media { position: relative; width: 100%; aspect-ratio: var(--card-aspect, 4/3); overflow: hidden; background: #ddd; }
+  .card-media img { width: 100%; height: 100%; object-fit: cover; }
+  .card-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .card-type { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); font-weight: 700; }
+  .card-title { margin: 0; font-family: var(--font-display); font-size: 19px; line-height: 1.2; }
+  .card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+  .card-tags .tag { font-size: 10.5px; color: var(--text-muted); border: 1px solid var(--border); border-radius: var(--radius); padding: 3px 8px; }
+  .card-index { position: absolute; top: 10px; left: 10px; font-family: ui-monospace, monospace; font-size: 10px; color: var(--text-muted); background: var(--bg-elevated); padding: 2px 6px; border-radius: var(--radius); opacity: 0.85; }
+
+  .empty-state { padding: 100px 20px; text-align: center; color: var(--text-muted); }
+
+  /* ============ MODALS ============ */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.55);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .modal-backdrop[hidden] { display: none; }
+  .modal {
+    background: var(--bg-elevated);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    max-width: 920px; width: 100%;
+    max-height: 88vh; overflow-y: auto;
+  }
+  .detail-modal { display: grid; grid-template-columns: 1.1fr 1fr; }
+  @media (max-width: 780px) { .detail-modal { grid-template-columns: 1fr; } }
+  .detail-media { background: #16151a; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .detail-media img { width: 100%; height: auto; max-height: 78vh; object-fit: contain; }
+  .detail-body { padding: 28px; display: flex; flex-direction: column; gap: 16px; }
+  .detail-close {
+    position: sticky; top: 12px; margin-left: auto;
+    background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 50%;
+    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; z-index: 5;
+  }
+  .detail-type { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); font-weight: 700; }
+  .detail-title { margin: 0; font-family: var(--font-display); font-size: 30px; line-height: 1.15; }
+  .detail-section-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+  .detail-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .detail-tags .tag { font-size: 11px; color: var(--text-muted); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px 9px; white-space: nowrap; }
+  .detail-link { font-size: 13px; text-decoration: underline; }
+  .detail-nolink { font-size: 13px; color: var(--text-muted); }
+  .brief-box {
+    width: 100%; resize: vertical; min-height: 90px;
+    background: var(--bg); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 10px 12px; font-size: 13px; line-height: 1.5; font-family: inherit;
+  }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn {
+    border: 1px solid var(--border); background: transparent; color: var(--text);
+    padding: 10px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 600;
+  }
+  .btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .btn:active { transform: scale(0.98); }
+
+  .add-modal { max-width: 560px; }
+  .add-form { padding: 28px; display: flex; flex-direction: column; gap: 16px; }
+  .add-form h2 { margin: 0 0 4px; font-family: var(--font-display); font-size: 22px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+  .field input[type="text"], .field input[type="url"], .field textarea {
+    background: var(--bg); color: var(--text); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 10px 12px; font-size: 14px; font-family: inherit; width: 100%;
+  }
+  .field input[type="file"] {
+    border: 1px dashed var(--border); border-radius: var(--radius); padding: 14px; font-size: 13px;
+    background: var(--bg); color: var(--text-muted); width: 100%;
+  }
+  .drop-preview { width: 100%; aspect-ratio: 16/9; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); display: none; background: #ddd; }
+  .drop-preview.has-img { display: block; }
+  .drop-preview img { width: 100%; height: 100%; object-fit: cover; }
+  .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #111; color: #fff; padding: 10px 18px; border-radius: 6px;
+    font-size: 13px; z-index: 1200; font-family: ui-monospace, monospace;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .toast[hidden] { display: none; }
+
+  /* ============================================================
+     STYLE 1 — PRINT-TECH PAPER
+     Warm archival paper, black grotesk display, halftone-adjacent
+     photography, monospace mono labels, single rust-orange accent.
+     ============================================================ */
+  [data-style="print"] {
+    --bg: #f2ede1; --bg-elevated: #fbf8f2; --text: #1c1a16; --text-muted: #6b6357;
+    --accent: #c1531f; --accent-text: #fff; --border: #d9d0ba;
+    --radius: 2px; --grid-cols: 4; --grid-gap: 22px; --card-aspect: 4/3;
+    --font-display: "Helvetica Neue", Arial, sans-serif;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+  }
+  [data-style="print"] .brand { font-size: 15px; letter-spacing: -0.02em; }
+  [data-style="print"] .card-title { font-weight: 700; letter-spacing: -0.01em; }
+  [data-style="print"] .card-tags .tag,
+  [data-style="print"] .detail-tags .tag,
+  [data-style="print"] .card-index { font-family: ui-monospace, "SF Mono", Menlo, monospace; text-transform: uppercase; letter-spacing: 0.02em; }
+  [data-style="print"] .card { box-shadow: 0 1px 0 var(--border); }
+
+  /* ============================================================
+     STYLE 2 — CONTACT SHEET
+     Darkroom black, image-bleed cards, overlay type on scrim,
+     tall condensed grotesk headline, single signal-red accent.
+     ============================================================ */
+  [data-style="contact"] {
+    --bg: #0b0b0c; --bg-elevated: #141415; --text: #f3f2ef; --text-muted: #9b9894;
+    --accent: #ff6a4d; --accent-text: #fff; --border: rgba(255,255,255,0.14);
+    --radius: 0px; --grid-cols: 3; --grid-gap: 14px; --card-aspect: 3/2;
+    --font-display: Arial, "Helvetica Neue", sans-serif;
+  }
+  [data-style="contact"] .card { border: none; }
+  [data-style="contact"] .card-media { aspect-ratio: var(--card-aspect); }
+  [data-style="contact"] .card-body {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 16px;
+    background: linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.86) 46%, rgba(0,0,0,0.55) 76%, rgba(0,0,0,0) 100%);
+    padding-top: 46px;
+  }
+  [data-style="contact"] .card-title { color: #fff; font-weight: 900; text-transform: uppercase; letter-spacing: -0.01em; font-size: 20px; }
+  [data-style="contact"] .card-type { color: var(--accent); }
+  [data-style="contact"] .card-tags .tag { border-color: rgba(255,255,255,0.3); color: #dedcd8; }
+  [data-style="contact"] .card-index { background: rgba(0,0,0,0.6); color: #eee; }
+  [data-style="contact"] .brand { text-transform: uppercase; font-weight: 900; letter-spacing: -0.02em; font-size: 17px; }
+  [data-style="contact"] .filter-bar { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding-top: 16px; padding-bottom: 16px; margin-bottom: 4px; }
+
+  /* ============================================================
+     STYLE 3 — GALLERY PLAQUE
+     Warm putty-stone ground, elegant serif display, sepia-muted
+     photography, museum wall-label captions, quiet bottle-green accent.
+     ============================================================ */
+  [data-style="gallery"] {
+    --bg: #e4ddce; --bg-elevated: #eee8db; --text: #2b271f; --text-muted: #8a8171;
+    --accent: #3f4a3a; --accent-text: #fff; --border: #cabf a8; --border: #cabfa8;
+    --radius: 0px; --grid-cols: 3; --grid-gap: 48px; --card-aspect: 3/2;
+    --font-display: Georgia, "Times New Roman", serif;
+  }
+  [data-style="gallery"] .brand { font-family: var(--font-display); font-size: 19px; letter-spacing: 0.01em; }
+  [data-style="gallery"] .card { background: transparent; border: none; }
+  [data-style="gallery"] .card-media { filter: sepia(0.35) contrast(1.02) brightness(0.98); border: 1px solid var(--border); }
+  [data-style="gallery"] .card-body { padding: 16px 2px 0; }
+  [data-style="gallery"] .card-title { font-weight: 400; font-size: 21px; }
+  [data-style="gallery"] .card-type { font-family: ui-monospace, monospace; letter-spacing: 0.1em; }
+  [data-style="gallery"] .card-tags { border-top: 1px solid var(--border); padding-top: 10px; gap: 4px 14px; }
+  [data-style="gallery"] .card-tags .tag { border: none; border-radius: 0; padding: 0; font-family: ui-monospace, monospace; letter-spacing: 0.04em; }
+  [data-style="gallery"] .card-index { position: static; background: none; padding: 0; display: block; margin-bottom: 6px; font-family: ui-monospace, monospace; }
+  [data-style="gallery"] .filter-bar { border-bottom: 1px solid var(--border); padding-bottom: 22px; margin-bottom: 12px; }
+  [data-style="gallery"] .chip { border-radius: 0; font-family: ui-monospace, monospace; letter-spacing: 0.03em; }
+
+  /* ============================================================
+     STYLE 4 — SWATCH DECK
+     Clean paper ground, cards sit on rotating flat color mats,
+     bold wide-tracked geometric sans, thick ink borders.
+     ============================================================ */
+  [data-style="swatch"] {
+    --bg: #faf9f6; --bg-elevated: #fff; --text: #141414; --text-muted: #5b5b5b;
+    --accent: #141414; --accent-text: #fff; --border: #141414;
+    --radius: 0px; --grid-cols: 3; --grid-gap: 20px; --card-aspect: 4/3;
+    --font-display: system-ui, "Helvetica Neue", Arial, sans-serif;
+    --swatch-1: #ffce45; --swatch-2: #ff6b4a; --swatch-3: #4d7cff; --swatch-4: #141414; --swatch-5: #efece2;
+  }
+  [data-style="swatch"] .brand { text-transform: uppercase; font-weight: 800; letter-spacing: 0.02em; }
+  [data-style="swatch"] .card { border: 3px solid var(--border); border-radius: 0; }
+  [data-style="swatch"] .card-title { font-weight: 800; text-transform: uppercase; letter-spacing: 0.01em; font-size: 17px; }
+  [data-style="swatch"] .card-type { color: inherit; }
+  [data-style="swatch"] .card-tags .tag { border: 1.5px solid var(--border); font-weight: 600; }
+  [data-style="swatch"] .grid .card:nth-of-type(5n+1) .card-body { background: var(--swatch-1); }
+  [data-style="swatch"] .grid .card:nth-of-type(5n+2) .card-body { background: var(--swatch-2); color: #fff; }
+  [data-style="swatch"] .grid .card:nth-of-type(5n+2) .card-type { color: #fff; }
+  [data-style="swatch"] .grid .card:nth-of-type(5n+2) .card-tags .tag { border-color: #fff; color: #fff; }
+  [data-style="swatch"] .grid .card:nth-of-type(5n+3) .card-body { background: var(--swatch-3); color: #fff; }
+  [data-style="swatch"] .grid .card:nth-of-type(5n+3) .card-type { color: #fff; }
+  [data-style="swatch"] .grid .card:nth-of-type(5n+3) .card-tags .tag { border-color: #fff; color: #fff; }
+  [data-style="swatch"] .grid .card:nth-of-type(5n+4) .card-body { background: var(--swatch-4); color: #fff; }
+  [data-style="swatch"] .grid .card:nth-of-type(5n+4) .card-type { color: #ffce45; }
+  [data-style="swatch"] .grid .card:nth-of-type(5n+4) .card-tags .tag { border-color: #fff; color: #fff; }
+  [data-style="swatch"] .grid .card:nth-of-type(5n+5) .card-body { background: var(--swatch-5); }
+  [data-style="swatch"] .chip { border-radius: 999px; border-width: 1.5px; }
+  [data-style="swatch"] .chip[data-facet="type"] { border-radius: 999px; }
+
+  /* ============================================================
+     STYLE 5 — TERMINAL LEDGER
+     Near-black charcoal, monospace throughout, bracket-notation
+     tags, desaturated imagery, restrained amber accent.
+     ============================================================ */
+  [data-style="terminal"] {
+    --bg: #0a0d0a; --bg-elevated: #0f130f; --text: #d8f5df; --text-muted: #62806a;
+    --accent: #ffbe5c; --accent-text: #0a0d0a; --border: rgba(255,190,92,0.22);
+    --radius: 0px; --grid-cols: 4; --grid-gap: 12px; --card-aspect: 4/3;
+    --font-display: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  }
+  [data-style="terminal"] .brand::before { content: "> "; color: var(--accent); }
+  [data-style="terminal"] .card-media img { filter: grayscale(0.55) contrast(1.08); }
+  [data-style="terminal"] .card-title { font-size: 15px; font-weight: 600; }
+  [data-style="terminal"] .card-tags .tag::before { content: "["; }
+  [data-style="terminal"] .card-tags .tag::after { content: "]"; }
+  [data-style="terminal"] .card-tags .tag { border: none; padding: 2px 0; color: var(--text-muted); }
+  [data-style="terminal"] .chip { border-radius: 0; }
+  [data-style="terminal"] .chip[data-facet="type"]::before { content: "#"; margin-right: 2px; }
+  [data-style="terminal"] .card-body { padding: 12px 14px 14px; }
+  [data-style="terminal"] .card-index { font-family: inherit; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card, .add-btn, .btn { transition: none !important; }
+  }
+</style>
+
+<div id="preview-bar">
+  <span class="pb-label">Preview — pick a style</span>
+  <button class="pb-style" data-style="print">Print-Tech Paper</button>
+  <button class="pb-style" data-style="contact">Contact Sheet</button>
+  <button class="pb-style" data-style="gallery">Gallery Plaque</button>
+  <button class="pb-style" data-style="swatch">Swatch Deck</button>
+  <button class="pb-style" data-style="terminal">Terminal Ledger</button>
+  <span class="pb-spacer"></span>
+  <button class="pb-reset" id="reset-data">Reset seed data</button>
+</div>
+
+<div id="app">
+  <header class="site-header">
+    <div class="brand">Inspiration Library</div>
+    <button class="add-btn" id="open-add">+ Add screenshot</button>
+  </header>
+  <nav class="filter-bar" id="filter-bar"></nav>
+  <main class="grid" id="grid"></main>
+  <div class="empty-state" id="empty-state" hidden>Nothing matches these filters yet.</div>
+</div>
+
+<div class="modal-backdrop" id="detail-backdrop" hidden>
+  <div class="modal detail-modal" id="detail-modal"></div>
+</div>
+
+<div class="modal-backdrop" id="add-backdrop" hidden>
+  <div class="modal add-modal">
+    <form class="add-form" id="add-form">
+      <h2>Add to the library</h2>
+      <div class="field">
+        <label for="f-image">Screenshot</label>
+        <input type="file" id="f-image" accept="image/*" required />
+        <div class="drop-preview" id="drop-preview"><img id="drop-preview-img" alt="" /></div>
+      </div>
+      <div class="field">
+        <label for="f-title">Title</label>
+        <input type="text" id="f-title" required placeholder="e.g. Stillpage" />
+      </div>
+      <div class="field">
+        <label for="f-url">Source URL (optional)</label>
+        <input type="url" id="f-url" placeholder="https://..." />
+      </div>
+      <div class="field">
+        <label for="f-type">Design type</label>
+        <input type="text" id="f-type" required placeholder="e.g. Landing Page, Portfolio, E-commerce" />
+      </div>
+      <div class="field">
+        <label for="f-vocab">Design vocabulary (comma separated)</label>
+        <input type="text" id="f-vocab" required placeholder="e.g. halftone texture, warm paper ground, mono labels" />
+      </div>
+      <div class="field">
+        <label for="f-brief">Brief (used for "Copy Prompt")</label>
+        <textarea id="f-brief" class="brief-box" placeholder="A short description of what makes this design work..."></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn" id="cancel-add">Cancel</button>
+        <button type="submit" class="btn primary">Add card</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var SEED = [
+    {
+      id: "seed-1",
+      title: "Crafting Culture — Detroit",
+      image: "data:image/jpeg;base64,__CRAFTING_CULTURE_B64__",
+      sourceUrl: "",
+      type: "Studio Portfolio",
+      vocab: ["oversized grotesk display", "black on white", "editorial photo grid", "AI/CGI production"],
+      brief: "Massive bold grotesk headline stacked two lines on a pure white ground, black type at huge scale. Below it, an offset masonry grid of high-contrast editorial photography bleeding to the frame edge. No color, no gradients, just scale, contrast, and type as the hero."
+    },
+    {
+      id: "seed-2",
+      title: "OUTFIT",
+      image: "data:image/jpeg;base64,__OUTFIT_B64__",
+      sourceUrl: "",
+      type: "E-commerce",
+      vocab: ["oversized display wordmark", "single saturated red", "flat color ground", "product photo grid"],
+      brief: "Full-bleed saturated red as the page ground, with the brand wordmark set enormous in a light reversal card. Tight four-up product photography grid beneath, black and white product shots for contrast against the red field."
+    },
+    {
+      id: "seed-3",
+      title: "Our Projects — Kim Kneipp",
+      image: "data:image/jpeg;base64,__OUR_PROJECTS_B64__",
+      sourceUrl: "",
+      type: "Portfolio",
+      vocab: ["serif display headline", "warm putty ground", "sepia photography", "filterable tag navigation"],
+      brief: "Warm putty-beige ground with an oversized elegant serif headline in soft grey-green ink. A radiating hairline motif points down into a filter bar with tag categories, then a sepia-toned photography grid with small mono captions beneath each image."
+    }
+  ];
+
+  var STORAGE_KEY = "inspiration-library-preview-v1";
+  var state = { cards: [], activeFilters: [], style: "print" };
+
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.cards) && parsed.cards.length) {
+          state.cards = parsed.cards;
+          state.style = parsed.style || "print";
+          return;
+        }
+      }
+    } catch (e) {}
+    state.cards = SEED.slice();
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards: state.cards, style: state.style }));
+    } catch (e) {}
+  }
+
+  function resetToSeed() {
+    state.cards = SEED.slice();
+    state.activeFilters = [];
+    saveState();
+    render();
+    showToast("Reset to the three seed screenshots.");
+  }
+
+  function facetsFor(card) {
+    var out = [{ label: card.type, facet: "type" }];
+    card.vocab.forEach(function (v) { out.push({ label: v, facet: "vocab" }); });
+    return out;
+  }
+
+  function allFacets() {
+    var map = {};
+    state.cards.forEach(function (card) {
+      facetsFor(card).forEach(function (f) {
+        var key = f.facet + ":" + f.label;
+        if (!map[key]) map[key] = { label: f.label, facet: f.facet, count: 0 };
+        map[key].count++;
+      });
+    });
+    var arr = Object.keys(map).map(function (k) { return map[k]; });
+    arr.sort(function (a, b) {
+      if (a.facet !== b.facet) return a.facet === "type" ? -1 : 1;
+      return b.count - a.count;
+    });
+    return arr;
+  }
+
+  function cardMatchesFilters(card) {
+    if (!state.activeFilters.length) return true;
+    var labels = facetsFor(card).map(function (f) { return f.facet + ":" + f.label; });
+    return state.activeFilters.some(function (f) { return labels.indexOf(f) !== -1; });
+  }
+
+  function toggleFilter(key) {
+    var idx = state.activeFilters.indexOf(key);
+    if (idx === -1) state.activeFilters.push(key);
+    else state.activeFilters.splice(idx, 1);
+    render();
+  }
+
+  function el(tag, attrs, children) {
+    var node = document.createElement(tag);
+    attrs = attrs || {};
+    Object.keys(attrs).forEach(function (k) {
+      if (k === "class") node.className = attrs[k];
+      else if (k === "text") node.textContent = attrs[k];
+      else if (k.indexOf("on") === 0 && typeof attrs[k] === "function") node.addEventListener(k.slice(2), attrs[k]);
+      else node.setAttribute(k, attrs[k]);
+    });
+    (children || []).forEach(function (c) { if (c) node.appendChild(c); });
+    return node;
+  }
+
+  function renderFilters() {
+    var bar = document.getElementById("filter-bar");
+    bar.innerHTML = "";
+    var total = state.cards.length;
+    var allChip = el("button", {
+      class: "chip" + (state.activeFilters.length === 0 ? " is-active" : ""),
+      "data-facet": "type",
+      onclick: function () { state.activeFilters = []; render(); }
+    }, [
+      document.createTextNode("All "),
+      el("span", { class: "chip-count", text: String(total) })
+    ]);
+    bar.appendChild(allChip);
+
+    allFacets().forEach(function (f) {
+      var key = f.facet + ":" + f.label;
+      var active = state.activeFilters.indexOf(key) !== -1;
+      var chip = el("button", {
+        class: "chip" + (active ? " is-active" : ""),
+        "data-facet": f.facet,
+        onclick: function () { toggleFilter(key); }
+      }, [
+        document.createTextNode(f.label + " "),
+        el("span", { class: "chip-count", text: String(f.count) })
+      ]);
+      bar.appendChild(chip);
+    });
+  }
+
+  function renderGrid() {
+    var grid = document.getElementById("grid");
+    var empty = document.getElementById("empty-state");
+    grid.innerHTML = "";
+    var visible = state.cards.filter(cardMatchesFilters);
+    empty.hidden = visible.length !== 0;
+    visible.forEach(function (card, i) {
+      var media = el("div", { class: "card-media" }, [
+        el("img", { src: card.image, alt: card.title, loading: "lazy" })
+      ]);
+      var tagWrap = el("div", { class: "card-tags" });
+      card.vocab.slice(0, 4).forEach(function (v) {
+        tagWrap.appendChild(el("span", { class: "tag", text: v }));
+      });
+      var body = el("div", { class: "card-body" }, [
+        el("div", { class: "card-type", text: card.type }),
+        el("h3", { class: "card-title", text: card.title }),
+        tagWrap
+      ]);
+      var idx = el("span", { class: "card-index", text: String(i + 1).padStart(2, "0") + " / " + String(visible.length).padStart(2, "0") });
+      var cardEl = el("article", {
+        class: "card", tabindex: "0", role: "button",
+        onclick: function () { openDetail(card.id); },
+        onkeydown: function (e) { if (e.key === "Enter") openDetail(card.id); }
+      }, [media, idx, body]);
+      grid.appendChild(cardEl);
+    });
+  }
+
+  function render() {
+    renderFilters();
+    renderGrid();
+    saveState();
+  }
+
+  // ---------- Detail modal ----------
+  function openDetail(id) {
+    var card = state.cards.find(function (c) { return c.id === id; });
+    if (!card) return;
+    var modal = document.getElementById("detail-modal");
+    modal.innerHTML = "";
+
+    var media = el("div", { class: "detail-media" }, [el("img", { src: card.image, alt: card.title })]);
+
+    var tagWrap = el("div", { class: "detail-tags" });
+    card.vocab.forEach(function (v) { tagWrap.appendChild(el("span", { class: "tag", text: v })); });
+
+    var briefBox = el("textarea", { class: "brief-box" });
+    briefBox.value = card.brief || "";
+    briefBox.addEventListener("input", function () { card.brief = briefBox.value; saveState(); });
+
+    var linkRow = card.sourceUrl
+      ? el("a", { class: "detail-link", href: card.sourceUrl, target: "_blank", rel: "noopener noreferrer", text: "Visit site ↗" })
+      : el("div", { class: "detail-nolink", text: "No source URL added" });
+
+    var copyImgBtn = el("button", { class: "btn primary", type: "button", text: "Copy image", onclick: function () { copyImage(card.image); } });
+    var copyPromptBtn = el("button", { class: "btn", type: "button", text: "Copy prompt", onclick: function () { copyText(briefBox.value); } });
+
+    var body = el("div", { class: "detail-body" }, [
+      el("button", { class: "detail-close", "aria-label": "Close", onclick: closeDetail, text: "×" }),
+      el("div", { class: "detail-type", text: card.type }),
+      el("h2", { class: "detail-title", text: card.title }),
+      linkRow,
+      el("div", { class: "detail-section-label", text: "Design vocabulary" }),
+      tagWrap,
+      el("div", { class: "detail-section-label", text: "Brief / prompt" }),
+      briefBox,
+      el("div", { class: "btn-row" }, [copyPromptBtn, copyImgBtn])
+    ]);
+
+    modal.appendChild(media);
+    modal.appendChild(body);
+    document.getElementById("detail-backdrop").hidden = false;
+  }
+
+  function closeDetail() { document.getElementById("detail-backdrop").hidden = true; }
+
+  document.getElementById("detail-backdrop").addEventListener("click", function (e) {
+    if (e.target === this) closeDetail();
+  });
+
+  // ---------- Add-card modal ----------
+  var pendingImage = null;
+
+  function openAdd() {
+    document.getElementById("add-form").reset();
+    document.getElementById("drop-preview").classList.remove("has-img");
+    pendingImage = null;
+    document.getElementById("add-backdrop").hidden = false;
+  }
+  function closeAdd() { document.getElementById("add-backdrop").hidden = true; }
+
+  document.getElementById("open-add").addEventListener("click", openAdd);
+  document.getElementById("cancel-add").addEventListener("click", closeAdd);
+  document.getElementById("add-backdrop").addEventListener("click", function (e) {
+    if (e.target === this) closeAdd();
+  });
+
+  document.getElementById("f-image").addEventListener("change", function (e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      pendingImage = reader.result;
+      var prev = document.getElementById("drop-preview");
+      document.getElementById("drop-preview-img").src = pendingImage;
+      prev.classList.add("has-img");
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById("add-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!pendingImage) { showToast("Choose a screenshot first."); return; }
+    var title = document.getElementById("f-title").value.trim();
+    var url = document.getElementById("f-url").value.trim();
+    var type = document.getElementById("f-type").value.trim();
+    var vocabRaw = document.getElementById("f-vocab").value.trim();
+    var brief = document.getElementById("f-brief").value.trim();
+    var vocab = vocabRaw.split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+    if (!title || !type || !vocab.length) { showToast("Fill in title, type, and at least one tag."); return; }
+    if (!brief) brief = title + " — a " + type.toLowerCase() + " built around " + vocab.slice(0, 3).join(", ") + ".";
+
+    var card = {
+      id: "card-" + Date.now(),
+      title: title, image: pendingImage, sourceUrl: url,
+      type: type, vocab: vocab, brief: brief
+    };
+    state.cards.unshift(card);
+    closeAdd();
+    render();
+    showToast("Added “" + title + "” to the library.");
+  });
+
+  // ---------- Copy actions ----------
+  function showToast(msg) {
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.hidden = false;
+    clearTimeout(showToast._timer);
+    showToast._timer = setTimeout(function () { t.hidden = true; }, 2400);
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(
+        function () { showToast("Prompt copied."); },
+        function () { showToast("Couldn't copy — select and copy manually."); }
+      );
+    } else {
+      showToast("Clipboard not available in this browser.");
+    }
+  }
+
+  function dataUrlToPngBlob(dataUrl) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () {
+        var canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob(function (blob) {
+          if (blob) resolve(blob); else reject(new Error("toBlob failed"));
+        }, "image/png");
+      };
+      img.onerror = reject;
+      img.src = dataUrl;
+    });
+  }
+
+  function copyImage(dataUrl) {
+    if (!navigator.clipboard || !window.ClipboardItem) {
+      showToast("Image copy isn't supported in this browser.");
+      return;
+    }
+    dataUrlToPngBlob(dataUrl).then(function (blob) {
+      return navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+    }).then(function () {
+      showToast("Image copied to clipboard.");
+    }).catch(function () {
+      showToast("Couldn't copy the image in this browser.");
+    });
+  }
+
+  // ---------- Style switching ----------
+  function setStyle(name) {
+    state.style = name;
+    document.documentElement.setAttribute("data-style", name);
+    document.querySelectorAll(".pb-style").forEach(function (btn) {
+      btn.classList.toggle("is-active", btn.getAttribute("data-style") === name);
+    });
+    saveState();
+  }
+
+  document.querySelectorAll(".pb-style").forEach(function (btn) {
+    btn.addEventListener("click", function () { setStyle(btn.getAttribute("data-style")); });
+  });
+
+  document.getElementById("reset-data").addEventListener("click", resetToSeed);
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { closeDetail(); closeAdd(); }
+  });
+
+  // ---------- Init ----------
+  loadState();
+  setStyle(state.style);
+  render();
+})();
+</script>
