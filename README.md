@@ -52,17 +52,22 @@ lists and the template mirrors them.
 
 | Axis | Terms |
 |---|---|
-| Layout | asymmetric grid, editorial columns, full-bleed imagery, bento grid, masonry, centred composition, split screen, dense index, product grid, generous whitespace |
-| Typography | oversized display, serif display, grotesk display, monospace accents, tight tracking, type as image, small caps labels |
-| Colour | monochrome, single saturated accent, warm neutral ground, cool neutral ground, dark ground, high contrast, duotone, muted palette |
-| Imagery | editorial photography, product photography, 3D render, illustration, archival grain, motion or video, no imagery |
+| Layout | full-bleed imagery, split screen, centred composition, asymmetric grid, card grid, generous whitespace |
+| Typography | oversized display, grotesk display, serif display, geometric sans, monospace accents |
+| Colour | dark ground, cool neutral ground, warm neutral ground, high contrast, muted palette, single saturated accent, gradient ground, multi-colour palette, monochrome |
+| Imagery | editorial photography, product photography, 3D render, archival grain, generative graphics, line icons |
+
+The lists are curated to what the library actually contains. Terms nothing used were
+removed rather than left sitting in the picker; terms the references needed were added.
+Keeping them earned rather than aspirational is what stops the filter bar filling with
+options that match nothing.
 
 Terms are worth adding as the library grows, but add them to both lists and prefer
 extending an axis over inventing one-off descriptions.
 
 ## Filters
 
-Below 7 references every tag shows, because otherwise the bar mirrors the cards and
+Below 5 references every tag shows, because otherwise the bar mirrors the cards and
 tells you nothing. Past that, only tags carried by two or more references stay in the
 bar; one-off tags stay on their card and collapse behind a toggle.
 
@@ -86,6 +91,12 @@ for all three faces and renders identically on every machine.
 
 Subsetting is to Latin plus the punctuation the interface uses. If you add copy needing
 other characters, regenerate with `fontTools.subset` and widen the character set.
+
+## Screenshot ratios
+
+Screenshots arrive at whatever ratio the browser window happened to be. Rather than crop
+them to the card and cut off headlines, `build.py` pads each one to 3:2 in its own
+median edge colour, so the grid stays uniform and no composition is lost.
 
 ## Copying from a card
 

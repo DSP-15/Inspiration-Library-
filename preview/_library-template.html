@@ -146,7 +146,7 @@
     border: 1px solid var(--border); background: var(--bg-elevated);
     transition: border-color 0.22s ease;
   }
-  .card-frame img { width: 100%; aspect-ratio: 3/2; object-fit: cover; }
+  .card-frame img { width: 100%; aspect-ratio: 3/2; object-fit: contain; }
   .card:hover .card-frame, .card:focus-visible .card-frame { border-color: var(--accent); }
 
   .card-body { padding: 17px 0 0; display: flex; flex-direction: column; gap: 9px; }
@@ -378,21 +378,21 @@
 
   var AXES = [
     { key: "layout", label: "Layout", terms: [
-      "asymmetric grid", "editorial columns", "full-bleed imagery", "bento grid",
-      "masonry", "centred composition", "split screen", "dense index",
-      "product grid", "generous whitespace"
+      "full-bleed imagery", "split screen", "centred composition",
+      "asymmetric grid", "card grid", "generous whitespace"
     ]},
     { key: "typography", label: "Typography", terms: [
-      "oversized display", "serif display", "grotesk display", "monospace accents",
-      "tight tracking", "type as image", "small caps labels"
+      "oversized display", "grotesk display", "serif display",
+      "geometric sans", "monospace accents"
     ]},
     { key: "colour", label: "Colour", terms: [
-      "monochrome", "single saturated accent", "warm neutral ground", "cool neutral ground",
-      "dark ground", "high contrast", "duotone", "muted palette"
+      "dark ground", "cool neutral ground", "warm neutral ground",
+      "high contrast", "muted palette", "single saturated accent",
+      "gradient ground", "multi-colour palette", "monochrome"
     ]},
     { key: "imagery", label: "Imagery", terms: [
       "editorial photography", "product photography", "3D render",
-      "illustration", "archival grain", "motion or video", "no imagery"
+      "archival grain", "generative graphics", "line icons"
     ]}
   ];
   var AXIS_BY_TERM = {};
@@ -458,7 +458,7 @@
      they group: below the threshold the bar would just mirror the
      cards one-to-one, which is noise, not navigation.
      ============================================================ */
-  var GROUPING_THRESHOLD = 6;
+  var GROUPING_THRESHOLD = 4;
 
   function termCounts() {
     var counts = {};
@@ -727,7 +727,6 @@
         // Deliberately conservative. A wrong pre-selection costs more than a
         // missing one: the point is a consistent shared vocabulary, and a term
         // that fires on everything stops discriminating between references.
-        var sorted = hueBuckets.slice().sort(function (a, b) { return b - a; });
         var highContrast = sdL > 0.29;
         var out = [];
 
@@ -736,9 +735,8 @@
         if (highContrast) out.push("high contrast");
         if (satPixels > n * 0.07 && topBucket > satPixels * 0.68 && activeBuckets <= 2) {
           out.push("single saturated accent");
-        } else if (activeBuckets === 2 && satPixels > n * 0.12 &&
-                   (sorted[0] + sorted[1]) > satPixels * 0.88) {
-          out.push("duotone");
+        } else if (activeBuckets >= 5 && satPixels > n * 0.14) {
+          out.push("multi-colour palette");
         }
         if (!highContrast && avgS >= 0.12 && avgS < 0.26 && avgL >= 0.32) out.push("muted palette");
         if (avgS < 0.24 && avgL > 0.66) {

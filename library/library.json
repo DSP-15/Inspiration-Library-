@@ -12,7 +12,6 @@
         "full-bleed imagery",
         "oversized display",
         "grotesk display",
-        "tight tracking",
         "monochrome",
         "high contrast",
         "editorial photography",
@@ -28,7 +27,7 @@
       "type": "E-commerce",
       "vocab": [
         "centred composition",
-        "product grid",
+        "card grid",
         "oversized display",
         "grotesk display",
         "single saturated accent",
@@ -44,8 +43,8 @@
       "sourceUrl": "",
       "type": "Portfolio",
       "vocab": [
-        "dense index",
-        "editorial columns",
+        "card grid",
+        "asymmetric grid",
         "oversized display",
         "serif display",
         "warm neutral ground",
@@ -53,7 +52,105 @@
         "editorial photography",
         "archival grain"
       ],
-      "brief": "A quiet interiors portfolio on a warm putty ground, with an oversized elegant serif headline in soft grey-green. A hairline motif leads the eye down into a dense index of work, where muted archival-toned photography sits in editorial columns under small captions."
+      "brief": "A quiet interiors portfolio on a warm putty ground, with an oversized elegant serif headline in soft grey-green. A hairline motif leads the eye down into a card grid of work, where muted archival-toned photography sits under small captions."
+    },
+    {
+      "id": "archiste",
+      "title": "Archiste",
+      "image": "archiste.png",
+      "sourceUrl": "",
+      "type": "Studio / Agency",
+      "vocab": [
+        "full-bleed imagery",
+        "oversized display",
+        "grotesk display",
+        "dark ground",
+        "muted palette",
+        "editorial photography"
+      ],
+      "brief": "An architecture studio that lets one photograph do the work. A curved concrete interior fills the whole viewport, dimmed just enough to carry type, and the studio name sits across it in enormous lowercase grotesk. Everything else is small and quiet: a one-line thesis, a row of social marks, and a single white card floating at the lower right holding the only call to action."
+    },
+    {
+      "id": "axiom-research",
+      "title": "Axiom Research",
+      "image": "axiom-research.png",
+      "sourceUrl": "",
+      "type": "Landing Page",
+      "vocab": [
+        "asymmetric grid",
+        "oversized display",
+        "grotesk display",
+        "monospace accents",
+        "dark ground",
+        "high contrast",
+        "single saturated accent",
+        "generative graphics"
+      ],
+      "brief": "A research institute rendered as an instrument panel. On near-black, a generative attractor is drawn in thousands of fine gold threads, filling the frame like a plotted trace. The name sits over it in large white grotesk, pushed to the lower right, while monospace labels report system state in the corners. The only colour is the gold of the curve."
+    },
+    {
+      "id": "creative-marketing-agency",
+      "title": "Creative Marketing Agency",
+      "image": "creative-marketing-agency.png",
+      "sourceUrl": "",
+      "type": "Studio / Agency",
+      "vocab": [
+        "split screen",
+        "geometric sans",
+        "gradient ground",
+        "dark ground",
+        "3D render"
+      ],
+      "brief": "A marketing site built on a single rendered object. A warm orange-to-brown gradient fills the page while a stack of translucent glass discs, iridescent at the edges, tumbles across the right two thirds. Copy sits low on the left in clean geometric sans, with the headline knocked out in white and a pill call to action beneath."
+    },
+    {
+      "id": "pieterkoopt",
+      "title": "PieterKoopt",
+      "image": "pieterkoopt.png",
+      "sourceUrl": "https://www.pieterkoopt.nl/nl",
+      "type": "Brand / Campaign",
+      "vocab": [
+        "full-bleed imagery",
+        "oversized display",
+        "serif display",
+        "dark ground",
+        "muted palette",
+        "editorial photography",
+        "archival grain"
+      ],
+      "brief": "A service for selling paintings, staged as an attic discovery. A gilt-framed Van Gogh hangs in a dim, dust-toned room among sheeted furniture, the whole scene graded olive and sepia. The headline runs in condensed caps with the second line dropping into italic serif, so the type turns at exactly the point the sentence does."
+    },
+    {
+      "id": "superly",
+      "title": "Superly",
+      "image": "superly.png",
+      "sourceUrl": "",
+      "type": "Product / SaaS",
+      "vocab": [
+        "card grid",
+        "centred composition",
+        "generous whitespace",
+        "geometric sans",
+        "cool neutral ground",
+        "multi-colour palette",
+        "line icons"
+      ],
+      "brief": "A carbon offset product that uses colour as its index. A centred headline in soft geometric sans sits in generous white space, and beneath it a row of tall rounded tiles, each a different saturated field, names one project type over a simple line icon. The palette does the categorising, so the row reads before any of the labels do."
+    },
+    {
+      "id": "belarosa-chalet",
+      "title": "Belarosa Chalet",
+      "image": "belarosa-chalet.png",
+      "sourceUrl": "https://www.belarosa-chalet.ch/en/kontakt",
+      "type": "Brand / Campaign",
+      "vocab": [
+        "split screen",
+        "generous whitespace",
+        "serif display",
+        "cool neutral ground",
+        "editorial photography"
+      ],
+      "brief": "An alpine hotel that holds itself very still. A wide letterspaced nav sits across the top, then the page splits: a deep green serif statement on the left in generous white space, one photograph of the lit chalet at dusk on the right. No overlap, no gradient, nothing decorative. The restraint is the luxury signal."
     }
   ]
 }

@@ -38,21 +38,21 @@ TYPES = [
 ]
 AXES = {
     "layout": [
-        "asymmetric grid", "editorial columns", "full-bleed imagery", "bento grid",
-        "masonry", "centred composition", "split screen", "dense index",
-        "product grid", "generous whitespace",
+        "full-bleed imagery", "split screen", "centred composition",
+        "asymmetric grid", "card grid", "generous whitespace",
     ],
     "typography": [
-        "oversized display", "serif display", "grotesk display", "monospace accents",
-        "tight tracking", "type as image", "small caps labels",
+        "oversized display", "grotesk display", "serif display",
+        "geometric sans", "monospace accents",
     ],
     "colour": [
-        "monochrome", "single saturated accent", "warm neutral ground",
-        "cool neutral ground", "dark ground", "high contrast", "duotone", "muted palette",
+        "dark ground", "cool neutral ground", "warm neutral ground",
+        "high contrast", "muted palette", "single saturated accent",
+        "gradient ground", "multi-colour palette", "monochrome",
     ],
     "imagery": [
         "editorial photography", "product photography", "3D render",
-        "illustration", "archival grain", "motion or video", "no imagery",
+        "archival grain", "generative graphics", "line icons",
     ],
 }
 ALL_TERMS = {t for terms in AXES.values() for t in terms}
@@ -64,11 +64,44 @@ WIDTHS = [1500, 1280, 1100, 900, 760]
 QUALITY = {1500: 86, 1280: 84, 1100: 82, 900: 80, 760: 78}
 
 
+CARD_RATIO = 3 / 2
+
+
+def edge_colour(img: Image.Image) -> tuple:
+    """Median colour of the image border, used to pad without a visible seam."""
+    w, h = img.size
+    px = img.load()
+    step = max(1, min(w, h) // 60)
+    samples = []
+    for x in range(0, w, step):
+        samples.append(px[x, 0])
+        samples.append(px[x, h - 1])
+    for y in range(0, h, step):
+        samples.append(px[0, y])
+        samples.append(px[w - 1, y])
+    return tuple(sorted(c[i] for c in samples)[len(samples) // 2] for i in range(3))
+
+
 def encode(path: Path, width: int) -> str:
     img = Image.open(path).convert("RGB")
+
+    # Screenshots arrive at whatever ratio the browser window was. Cropping them
+    # to the card would cut off headlines and edge content, which is the part
+    # worth referencing, so pad to the card ratio in the screenshot's own edge
+    # colour instead. The grid stays uniform and no composition is lost.
     w, h = img.size
-    if w > width:
-        img = img.resize((width, round(h * width / w)), Image.LANCZOS)
+    ratio = w / h
+    if abs(ratio - CARD_RATIO) > 0.01:
+        if ratio > CARD_RATIO:
+            canvas_w, canvas_h = w, round(w / CARD_RATIO)
+        else:
+            canvas_w, canvas_h = round(h * CARD_RATIO), h
+        canvas = Image.new("RGB", (canvas_w, canvas_h), edge_colour(img))
+        canvas.paste(img, ((canvas_w - w) // 2, (canvas_h - h) // 2))
+        img = canvas
+
+    if img.width > width:
+        img = img.resize((width, round(img.height * width / img.width)), Image.LANCZOS)
     buf = io.BytesIO()
     img.save(buf, "JPEG", quality=QUALITY[width], optimize=True, subsampling=0)
     return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
